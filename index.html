@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Hub</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&display=swap');
+
+        :root {
+            --green-dark: #166534;
+            --green-mid: #15803d;
+            --blue-dark: #1e3a5f;
+            --blue-mid: #2563eb;
+            --blue-light: #dbeafe;
+            --blue-border: #93c5fd;
+            --neonyellow-dark: #5a4a00;
+            --neonyellow-mid: #c8a800;
+            --neonyellow-border: #e6d800;
+            --red-dark: #7f1d1d;
+            --red-mid: #dc2626;
+            --red-light: #fee2e2;
+            --red-border: #fca5a5;
+            --yellow-dark: #78350f;
+            --yellow-mid: #d97706;
+            --yellow-light: #fefce8;
+            --yellow-border: #fde68a;
+            --neongreen-dark: #064e2a;
+            --neongreen-mid: #16a34a;
+            --neongreen-light: #f0fff4;
+            --neongreen-border: #39ff14;
+            --purple-dark: #3b0764;
+            --purple-mid: #7c3aed;
+            --purple-light: #faf5ff;
+            --purple-border: #c084fc;
+            --orange-dark: #7c2d12;
+            --orange-mid: #ea580c;
+            --orange-light: #fff7ed;
+            --orange-border: #fdba74;
+            --status-ok: #166534;
+            --status-warn: #b45309;
+            --status-danger: #b91c1c;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e0f2fe 100%);
+            margin: 0;
+            padding: 20px;
+            color: #1e2937;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 0;
+            box-shadow: none;
+            overflow: visible;
+            border: none;
+        }
+        @media (min-width: 768px) {
+            .container {
+                border-radius: 16px;
+                box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+                overflow: hidden;
+                border: 8px solid var(--green-dark);
+                margin: 20px auto;
+            }
+        }
+
+        .header {
+            background: #000;
+            color: white;
+            padding: 22px 40px 18px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-family: 'Playfair Display', serif;
+            font-size: 2.6rem;
+            letter-spacing: 2px;
+            color: #fff;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            padding: 10px;
+            background: #0a0a0f;
+            border-bottom: 1px solid #1e1b4b;
+        }
+        @media (min-width: 600px) {
+            .toolbar { display: flex; flex-wrap: wrap; justify-content: center; padding: 12px 20px; gap: 8px; }
+        }
+        .toolbar-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 10px 6px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        .toolbar-btn:active { opacity: 0.7; transform: scale(0.96); }
+        @media (min-width: 600px) {
+            .toolbar-btn { padding: 8px 14px; font-size: 0.78rem; gap: 7px; }
+        }
+        .btn-print { background: #052e16; color: #4ade80; border-color: #16a34a; }
+        .btn-save  { background: #0c1445; color: #60a5fa; border-color: #2563eb; }
+        .btn-scan  { background: #2e1065; color: #c084fc; border-color: #7c3aed; }
+
+        /* ── Personal Info block — dark electric, outlined ── */
+        .personal-block {
+            margin: 10px;
+            border: 1.5px solid #312e81;
+            border-radius: 14px;
+            padding: 0;
+            display: grid;
+            grid-template-columns: 1fr;
+            background: #0d0d1a;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(99,102,241,0.15);
+        }
+        @media (min-width: 600px) {
+            .personal-block {
+                margin: 16px 20px;
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+        .pi-col {
+            padding: 14px 16px;
+            border-right: none;
+            border-bottom: 1px solid #1e1b4b;
+            position: relative;
+        }
+        .pi-col:last-child { border-bottom: none; }
+        @media (min-width: 600px) {
+            .pi-col { border-right: 1px solid #1e1b4b; border-bottom: none; padding: 16px 18px; }
+            .pi-col:last-child { border-right: none; }
+        }
+        .pi-col-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1e1b4b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .pi-col-title.cyan  { color: #22d3ee; border-color: #164e63; }
+        .pi-col-title.lime  { color: #a3e635; border-color: #365314; }
+        .pi-col-title.pink  { color: #f472b6; border-color: #831843; }
+
+        .pi-group { display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
+        .pi-label { font-size: 0.64rem; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; }
+        .pi-value { font-size: 0.86rem; color: #e2e8f0; font-weight: 500; }
+
+        .pi-input {
+            background: #0f172a;
+            border: 1px solid #1e3a5f;
+            border-radius: 6px;
+            color: #e2e8f0;
+            padding: 5px 9px;
+            font-size: 0.8rem;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .pi-input:focus { outline: none; border-color: #22d3ee; box-shadow: 0 0 8px rgba(34,211,238,0.3); }
+
+        .bmi-badge {
+            display: inline-block;
+            padding: 1px 7px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+        .bmi-normal { background: #14532d; color: #4ade80; border: 1px solid #16a34a; }
+        .bmi-over   { background: #431407; color: #fb923c; border: 1px solid #c2410c; }
+        .bmi-obese  { background: #450a0a; color: #f87171; border: 1px solid #b91c1c; }
+        .bmi-under  { background: #0c1445; color: #60a5fa; border: 1px solid #2563eb; }
+
+        .log-entry {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.76rem;
+            color: #cbd5e1;
+            margin-bottom: 4px;
+            padding: 3px 7px;
+            background: #0f172a;
+            border-radius: 5px;
+            border: 1px solid #1e293b;
+        }
+        .log-val-weight { color: #a3e635; font-weight: 600; }
+        .log-val-bp     { color: #f472b6; font-weight: 600; }
+        .log-date { color: #475569; font-size: 0.68rem; margin-left: auto; }
+
+        .log-btn-row { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+        .add-log-btn {
+            background: #0f172a;
+            border: 1px solid #1e3a5f;
+            border-radius: 6px;
+            color: #60a5fa;
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .add-log-btn:hover { background: #1e293b; border-color: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.4); }
+        .reset-log-btn {
+            background: #0f172a;
+            border: 1px solid #450a0a;
+            border-radius: 6px;
+            color: #f87171;
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .reset-log-btn:hover { background: #1a0505; border-color: #b91c1c; box-shadow: 0 0 6px rgba(239,68,68,0.3); }
+
+        /* ── Tabs ── */
+        .tabs-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+            padding: 8px 8px 0;
+            background: #0a0a0f;
+            border-bottom: 2px solid #1e1b4b;
+        }
+        @media (min-width: 600px) {
+            .tabs-bar { display: flex; flex-wrap: wrap; gap: 3px; padding: 12px 16px 0; }
+        }
+        .tab-btn {
+            padding: 9px 4px;
+            border-radius: 6px 6px 0 0;
+            border: 1px solid #1e1b4b;
+            border-bottom: none;
+            background: #111127;
+            color: #64748b;
+            font-size: 0.62rem;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: center;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            line-height: 1.3;
+        }
+        .tab-btn:active { background: #1e1b4b; }
+        @media (min-width: 600px) {
+            .tab-btn { padding: 7px 13px; font-size: 0.72rem; white-space: nowrap; }
+        }
+        .tab-btn.active {
+            background: #ffffff;
+            color: #1e1b4b;
+            border-color: #4f46e5;
+            border-bottom: 2px solid white;
+            margin-bottom: -2px;
+            font-weight: 700;
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        /* Mobile table scroll */
+        .section { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { min-width: 500px; }
+        @media (min-width: 768px) { table { min-width: unset; } }
+        /* Mobile content padding */
+        .content { padding: 10px; }
+        @media (min-width: 600px) { .content { padding: 40px; } }
+        /* Mobile section padding */
+        .section { padding: 12px; }
+        @media (min-width: 600px) { .section { padding: 25px; } }
+
+        /* ── Tooltip system ── */
+        .tt {
+            border-bottom: 1px dashed #64748b;
+            cursor: help;
+            position: relative;
+        }
+        .tt-box {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            background: #0f172a;
+            border: 1px solid #3b82f6;
+            border-radius: 10px;
+            padding: 12px 15px;
+            max-width: 340px;
+            font-size: 0.76rem;
+            line-height: 1.55;
+            color: #cbd5e1;
+            box-shadow: 0 0 24px rgba(59,130,246,0.25);
+            pointer-events: none;
+        }
+        .tt-box strong { color: #60a5fa; font-size: 0.8rem; display: block; margin-bottom: 5px; }
+        .tt-box .tt-normal { color: #4ade80; font-size: 0.7rem; margin-top: 5px; display: block; }
+        .tt-box.visible { display: block; }
+
+        /* ── Data Entry Panel ── */
+        .entry-panel {
+            background: #0a0a14;
+            border: 1px solid #1e1b4b;
+            border-radius: 10px;
+            margin: 14px 0 0;
+            overflow: hidden;
+        }
+        .entry-toggle {
+            width: 100%;
+            background: #111127;
+            border: none;
+            color: #a5b4fc;
+            padding: 9px 16px;
+            text-align: left;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.03em;
+        }
+        .entry-toggle:hover { background: #1e1b4b; }
+        .entry-body {
+            display: none;
+            padding: 16px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .entry-body.open { display: flex; }
+        .entry-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .entry-label {
+            font-size: 0.72rem;
+            color: #64748b;
+            min-width: 110px;
+        }
+        .entry-input {
+            background: #0f172a;
+            border: 1px solid #1e3a5f;
+            border-radius: 6px;
+            color: #e2e8f0;
+            padding: 4px 9px;
+            font-size: 0.8rem;
+            width: 110px;
+        }
+        .entry-input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 6px rgba(99,102,241,0.4); }
+        .entry-date-input {
+            background: #0f172a;
+            border: 1px solid #1e3a5f;
+            border-radius: 6px;
+            color: #94a3b8;
+            padding: 4px 9px;
+            font-size: 0.75rem;
+            width: 130px;
+        }
+        .entry-save-btn {
+            background: #1e1b4b;
+            border: 1px solid #4f46e5;
+            border-radius: 6px;
+            color: #a5b4fc;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .entry-save-btn:hover { background: #312e81; box-shadow: 0 0 8px rgba(99,102,241,0.4); }
+        .entry-section-title {
+            width: 100%;
+            font-size: 0.68rem;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 0 2px;
+            border-top: 1px solid #1e1b4b;
+            margin-top: 6px;
+        }
+        .entry-section-title:first-child { border-top: none; margin-top: 0; }
+
+        /* ── AI Assessment modal ── */
+        .ai-modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .ai-modal-overlay.open { display: flex; }
+        .ai-modal {
+            background: #0d0d1a;
+            border: 1px solid #4f46e5;
+            border-radius: 14px;
+            padding: 26px 28px;
+            width: 700px;
+            max-width: 95vw;
+            max-height: 85vh;
+            overflow-y: auto;
+            color: #e2e8f0;
+            box-shadow: 0 0 40px rgba(99,102,241,0.3);
+        }
+        .ai-modal h2 { margin: 0 0 14px; font-size: 1rem; color: #a5b4fc; display: flex; align-items: center; gap: 8px; }
+        .ai-close { float: right; background: none; border: none; color: #64748b; font-size: 1.3rem; cursor: pointer; }
+        .ai-response {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-size: 0.82rem;
+            line-height: 1.7;
+            color: #cbd5e1;
+            min-height: 80px;
+            white-space: pre-wrap;
+        }
+        .ai-thinking {
+            color: #6366f1;
+            font-style: italic;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ai-run-btn {
+            margin-top: 14px;
+            background: linear-gradient(to right, #312e81, #4f46e5);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 9px 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: opacity 0.2s;
+        }
+        .ai-run-btn:hover { opacity: 0.85; }
+        .ai-run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ── Scans modal ── */
+        .scans-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .scans-overlay.open { display: flex; }
+        .scans-modal {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            width: 680px;
+            max-width: 95vw;
+            max-height: 85vh;
+            overflow-y: auto;
+            color: #e2e8f0;
+        }
+        .scans-modal h2 { margin: 0 0 16px; font-size: 1.1rem; color: #f1f5f9; }
+        .scans-close {
+            float: right; background: none; border: none;
+            color: #94a3b8; font-size: 1.3rem; cursor: pointer; margin-top: -4px;
+        }
+        .scan-drop {
+            border: 2px dashed #475569;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .scan-drop:hover, .scan-drop.dragover { border-color: #7c3aed; color: #c4b5fd; }
+        .scan-drop input { display: none; }
+        .scan-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .scan-thumb {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 0.75rem;
+            color: #cbd5e1;
+            text-align: center;
+            position: relative;
+        }
+        .scan-thumb img { width: 100%; border-radius: 4px; margin-bottom: 4px; max-height: 120px; object-fit: cover; }
+        .scan-thumb .scan-del {
+            position: absolute; top: 4px; right: 4px;
+            background: #b91c1c; color: white; border: none;
+            border-radius: 50%; width: 18px; height: 18px;
+            font-size: 0.65rem; cursor: pointer; line-height: 18px;
+        }
+        .scan-label-input {
+            background: #1e293b; border: 1px solid #334155;
+            border-radius: 4px; color: #f1f5f9;
+            width: 100%; font-size: 0.72rem; padding: 2px 5px; margin-top: 3px;
+            box-sizing: border-box;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        /* ── Section shells ── */
+        .section {
+            margin-bottom: 45px;
+            border-radius: 12px;
+            padding: 25px;
+            background: #fff;
+        }
+
+        .section-header {
+            color: white;
+            padding: 12px 20px;
+            margin: -25px -25px 20px -25px;
+            border-radius: 8px 8px 0 0;
+            font-size: 1.35rem;
+            font-weight: 600;
+        }
+
+        /* Ultra-blue — ECG Trends */
+        .section-blue {
+            border: 3px solid var(--blue-border);
+            background: #f0f6ff;
+        }
+        .section-blue .section-header {
+            background: linear-gradient(to right, var(--blue-dark), var(--blue-mid));
+            color: white;
+        }
+        .section-blue th {
+            background: var(--blue-light);
+            color: var(--blue-dark);
+        }
+
+        /* Neon yellow — Echocardiogram */
+        .section-neonyellow {
+            border: 3px solid var(--neonyellow-border);
+            background: #fffde7;
+        }
+        .section-neonyellow .section-header {
+            background: linear-gradient(to right, var(--neonyellow-dark), var(--neonyellow-mid));
+            color: #1a1a00;
+        }
+        .section-neonyellow th {
+            background: #fffe00;
+            color: var(--neonyellow-dark);
+        }
+
+        /* Red — Carotid */
+        .section-red {
+            border: 3px solid var(--red-border);
+            background: #fff8f8;
+        }
+        .section-red .section-header {
+            background: linear-gradient(to right, var(--red-dark), var(--red-mid));
+        }
+        .section-red th {
+            background: var(--red-light);
+            color: var(--red-dark);
+        }
+
+        /* Yellow — Overall */
+        .section-yellow {
+            border: 3px solid var(--yellow-border);
+            background: var(--yellow-light);
+        }
+        .section-yellow .section-header {
+            background: linear-gradient(to right, var(--yellow-dark), var(--yellow-mid));
+        }
+        .section-yellow th {
+            background: #fef9c3;
+            color: var(--yellow-dark);
+        }
+
+        /* Neon green — LFT */
+        .section-neongreen {
+            border: 3px solid var(--neongreen-border);
+            background: var(--neongreen-light);
+        }
+        .section-neongreen .section-header {
+            background: linear-gradient(to right, var(--neongreen-dark), var(--neongreen-mid));
+            color: white;
+        }
+        .section-neongreen th {
+            background: #d1fae5;
+            color: var(--neongreen-dark);
+        }
+
+        /* Purple — KFT */
+        .section-purple {
+            border: 3px solid var(--purple-border);
+            background: var(--purple-light);
+        }
+        .section-purple .section-header {
+            background: linear-gradient(to right, var(--purple-dark), var(--purple-mid));
+            color: white;
+        }
+        .section-purple th {
+            background: #ede9fe;
+            color: var(--purple-dark);
+        }
+
+        /* Orange — Metabolic Metrics */
+        .section-orange {
+            border: 3px solid var(--orange-border);
+            background: var(--orange-light);
+        }
+        .section-orange .section-header {
+            background: linear-gradient(to right, var(--orange-dark), var(--orange-mid));
+            color: white;
+        }
+        .section-orange th {
+            background: #fed7aa;
+            color: var(--orange-dark);
+        }
+
+        /* Teal — Blood Panel */
+        .section-teal {
+            border: 3px solid #5eead4;
+            background: #f0fdfa;
+        }
+        .section-teal .section-header {
+            background: linear-gradient(to right, #134e4a, #0d9488);
+            color: white;
+        }
+        .section-teal th {
+            background: #ccfbf1;
+            color: #134e4a;
+        }
+
+        .section-neongreen h3,
+        .section-purple h3 {
+            margin-top: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 400;
+        }
+
+        th {
+            font-weight: 500;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        /* ── Status badges — color only, no fill, no bold ── */
+        .status-normal  { color: var(--status-ok); font-weight: 400; }
+        .status-monitor { color: var(--status-warn); font-weight: 400; }
+
+        .status-warning {
+            color: var(--status-warn);
+            font-weight: 400;
+        }
+
+        .status-danger {
+            color: var(--status-danger);
+            font-weight: 400;
+        }
+
+        .highlight {
+            font-weight: 400;
+        }
+
+        /* ── Key takeaways ── */
+        .section-yellow h3 {
+            color: var(--yellow-dark);
+            margin-top: 25px;
+        }
+
+        .section-yellow ul li {
+            margin-bottom: 6px;
+        }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 25px;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        .disclaimer {
+            font-size: 0.85rem;
+            color: #ef4444;
+            font-style: italic;
+        }
+    
+        /* ── Mobile touch improvements ── */
+        input[type="date"], input[type="number"], input[type="text"], .pi-input, .entry-input, .entry-date-input {
+            font-size: 16px !important; /* prevents iOS zoom on focus */
+            -webkit-appearance: none;
+        }
+        .add-log-btn, .reset-log-btn, .entry-save-btn, .entry-toggle {
+            min-height: 40px;
+            font-size: 0.78rem;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .entry-body {
+            display: none;
+            padding: 12px;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .entry-body.open { display: flex; }
+        .entry-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        @media (min-width: 600px) {
+            .entry-row { flex-direction: row; align-items: center; }
+        }
+        .entry-label { min-width: unset; font-size: 0.72rem; color: #64748b; }
+        .entry-input, .entry-date-input { width: 100%; box-sizing: border-box; }
+        /* Scans modal mobile */
+        .scans-modal, .ai-modal { width: 95vw; padding: 16px; }
+        /* Section header smaller on mobile */
+        .section-header { font-size: 1rem; padding: 10px 14px; margin: -12px -12px 14px -12px; }
+        @media (min-width: 600px) { .section-header { font-size: 1.35rem; padding: 12px 20px; margin: -25px -25px 20px -25px; } }
+        /* Body font smaller on mobile */
+        body { font-size: 13px; padding: 0; }
+        @media (min-width: 600px) { body { font-size: 14px; padding: 20px; } }
+        </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div class="header">
+            <h1>Health Hub</h1>
+        </div>
+
+        <!-- Scans Modal -->
+        <div class="scans-overlay" id="scansOverlay">
+            <div class="scans-modal">
+                <button class="scans-close" onclick="document.getElementById('scansOverlay').classList.remove('open')">✕</button>
+                <h2>📂 Medical Scans &amp; Reports</h2>
+                <div class="scan-drop" id="scanDrop" onclick="document.getElementById('scanFileInput').click()"
+                     ondragover="event.preventDefault();this.classList.add('dragover')"
+                     ondragleave="this.classList.remove('dragover')"
+                     ondrop="handleScanDrop(event)">
+                    <input type="file" id="scanFileInput" multiple accept="image/*,.pdf" onchange="handleScanFiles(this.files)">
+                    <div style="font-size:2rem;margin-bottom:8px;">📎</div>
+                    Click or drag &amp; drop to upload ECGs, ultrasounds, lab reports (images or PDFs)
+                </div>
+                <div class="scan-grid" id="scanGrid"></div>
+            </div>
+        </div>
+
+        <!-- AI Assessment Modal -->
+        <div class="ai-modal-overlay" id="aiOverlay">
+            <div class="ai-modal">
+                <button class="ai-close" onclick="document.getElementById('aiOverlay').classList.remove('open')">✕</button>
+                <h2>🤖 AI Health Assessment</h2>
+                <div id="aiContext" style="font-size:0.75rem;color:#475569;margin-bottom:10px;"></div>
+                <div class="ai-response" id="aiResponse"><span style="color:#475569;">Click the button below to get an AI-powered assessment of your current readings.</span></div>
+                <button class="ai-run-btn" id="aiRunBtn" onclick="runAIAssessment()">✨ Fetch AI Assessment</button>
+            </div>
+        </div>
+
+        <!-- Global tooltip box -->
+        <div class="tt-box" id="ttBox"></div>
+
+        <div class="toolbar">
+            <button class="toolbar-btn btn-print" onclick="window.print()">🖨️ Print</button>
+            <button class="toolbar-btn btn-save" onclick="saveAsHTML()">💾 Save HTML</button>
+            <button class="toolbar-btn" style="background:#052e2e;color:#2dd4bf;border:1px solid #0d9488;" onclick="exportJSON()">📤 Export Data</button>
+            <button class="toolbar-btn" style="background:#052e2e;color:#34d399;border:1px solid #059669;" onclick="document.getElementById('importInput').click()">📥 Import Data</button>
+            <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
+            <button class="toolbar-btn btn-scan" onclick="document.getElementById('scansOverlay').classList.add('open')">🩻 Scans &amp; Reports</button>
+            <button class="toolbar-btn" style="background:#1a0533;color:#e879f9;border:1px solid #a21caf;" onclick="document.getElementById('aiOverlay').classList.add('open')">🤖 AI Assessment</button>
+        </div>
+
+        <!-- Personal Info Block — dark electric, 3 columns -->
+        <div class="personal-block">
+            <!-- Col 1: Identity — cyan -->
+            <div class="pi-col">
+                <div class="pi-col-title cyan">◈ Personal</div>
+                <div class="pi-group">
+                    <span class="pi-label">Full Name</span>
+                    <input class="pi-input" id="piName" placeholder="Enter name" value="Ian Joubert" onchange="savePI()">
+                </div>
+                <div class="pi-group">
+                    <span class="pi-label">Date of Birth</span>
+                    <input class="pi-input" id="piDOB" type="date" value="1971-01-01" onchange="calcAge();savePI()">
+                </div>
+                <div class="pi-group">
+                    <span class="pi-label">Age</span>
+                    <span class="pi-value" id="piAge" style="color:#22d3ee;">—</span>
+                </div>
+            </div>
+            <!-- Col 2: Body Metrics — lime -->
+            <div class="pi-col">
+                <div class="pi-col-title lime">◈ Body Metrics</div>
+                <div class="pi-group">
+                    <span class="pi-label">Height (cm)</span>
+                    <input class="pi-input" id="piHeight" type="number" placeholder="e.g. 178" onchange="calcBMI();savePI()" style="border-color:#365314;">
+                </div>
+                <div class="pi-group">
+                    <span class="pi-label">Weight readings</span>
+                    <div id="weightLog"></div>
+                    <div class="log-btn-row">
+                        <button class="add-log-btn" onclick="addWeightEntry()">＋ Add</button>
+                        <button class="reset-log-btn" onclick="resetLog('weightLog','weight')">↺ Reset</button>
+                    </div>
+                </div>
+                <div class="pi-group">
+                    <span class="pi-label">BMI</span>
+                    <span class="pi-value" id="piBMI" style="color:#a3e635;">—</span>
+                </div>
+            </div>
+            <!-- Col 3: Blood Pressure — pink -->
+            <div class="pi-col">
+                <div class="pi-col-title pink">◈ Blood Pressure</div>
+                <div class="pi-group">
+                    <span class="pi-label">BP readings (systolic/diastolic)</span>
+                    <div id="bpLog"></div>
+                    <div class="log-btn-row">
+                        <button class="add-log-btn" onclick="addBPEntry()" style="color:#f472b6;border-color:#831843;">＋ Add</button>
+                        <button class="reset-log-btn" onclick="resetLog('bpLog','bp')">↺ Reset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs bar -->
+        <div class="tabs-bar">
+            <button class="tab-btn active" onclick="showTab('tab-ecg',this)">❤️ ECG &amp; Heart</button>
+            <button class="tab-btn" onclick="showTab('tab-echo',this)">🔬 Echo</button>
+            <button class="tab-btn" onclick="showTab('tab-carotid',this)">🫀 Carotid</button>
+            <button class="tab-btn" onclick="showTab('tab-lft',this)">🌿 Liver (LFT)</button>
+            <button class="tab-btn" onclick="showTab('tab-kft',this)">💧 Kidney (KFT)</button>
+            <button class="tab-btn" onclick="showTab('tab-metabolic',this)">⚡ Metabolic</button>
+            <button class="tab-btn" onclick="showTab('tab-blood',this)">🔴 Blood Panel</button>
+            <button class="tab-btn" onclick="showTab('tab-overall',this)">📊 Assessment</button>
+        </div>
+
+        <div class="content">
+
+            <!-- TAB 1: ECG -->
+            <div class="tab-panel active" id="tab-ecg">
+                <div class="section section-blue">
+                    <div class="section-header">1. ECG Trends (2023–2026)</div>
+                    <table>
+                        <thead><tr>
+                            <th>Date</th><th>Condition</th><th>BP</th><th>BPM</th>
+                            <th><span class="tt" data-tt="pr">PR (ms)</span></th>
+                            <th><span class="tt" data-tt="qrs">QRS (ms)</span></th>
+                            <th>QT/QTc (ms)</th>
+                            <th>Key Findings</th><th>Status</th>
+                        </tr></thead>
+                        <tbody id="ecgRows">
+                            <tr><td>17 Dec 2023</td><td>Pain in left arm</td><td>150/90</td><td>62</td><td>166</td><td>120</td><td>434/440</td><td>Minor notes</td><td class="status-normal">Normal</td></tr>
+                            <tr><td>23 Apr 2024</td><td>Check up / GERD</td><td>170/90</td><td>63</td><td>164</td><td>118</td><td>412/432</td><td>—</td><td class="status-normal">Normal</td></tr>
+                            <tr><td>20 Feb 2025</td><td>Check-up</td><td>150/80</td><td>59</td><td>164</td><td>114</td><td>420/416</td><td>Slower rate</td><td class="status-normal">Mildly slow</td></tr>
+                            <tr><td>28 Jun 2025</td><td>Check</td><td>131/87</td><td>47</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                            <tr><td>20 Nov 2025</td><td>—</td><td>—</td><td>60</td><td>150</td><td>126</td><td>422/422</td><td>—</td><td class="status-warning">Monitor (QRS mildly prolonged)</td></tr>
+                            <tr><td>20 Jun 2026</td><td>—</td><td>—</td><td>70</td><td>164</td><td>120</td><td>386/416</td><td>Flattened T waves</td><td class="status-warning">Monitor</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size:0.8rem;color:#555;">Normal Ranges: HR 60–100 bpm | PR 120–200 ms | QRS &lt;120 ms | QTc &lt;440 ms (men)</p>
+
+                    <p style="margin:14px 0 8px;font-size:0.85rem;color:#1e3a5f;font-weight:500;"><span class="tt" data-tt="troponin">Troponin</span> &amp; <span class="tt" data-tt="ckmb">CK-MB</span> (cardiac injury markers)</p>
+                    <table>
+                        <thead><tr>
+                            <th>Date</th>
+                            <th><span class="tt" data-tt="troponin">Troponin I</span> (pg/mL)<br><span style="font-weight:400;font-size:0.78rem">&lt;26 pg/mL</span></th>
+                            <th><span class="tt" data-tt="ckmb">CK-MB</span><br><span style="font-weight:400;font-size:0.78rem">&lt;30 U/L</span></th>
+                            <th>Status</th><th>Notes</th>
+                        </tr></thead>
+                        <tbody id="troponinRows">
+                            <tr><td>17 Dec 2023</td><td class="status-normal">3 pg/mL</td><td class="status-normal">22 U/L</td><td class="status-normal">Normal</td><td>Both within range</td></tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Entry panel: ECG -->
+                    <div class="entry-panel">
+                        <button class="entry-toggle" onclick="toggleEntry('ecgEntry')">＋ Add New ECG / Troponin Reading</button>
+                        <div class="entry-body" id="ecgEntry">
+                            <div class="entry-section-title">ECG</div>
+                            <div class="entry-row"><span class="entry-label">Date</span><input class="entry-date-input" id="ecg-date" type="date"></div>
+                            <div class="entry-row"><span class="entry-label">Heart Rate (bpm)</span><input class="entry-input" id="ecg-hr" placeholder="e.g. 68"></div>
+                            <div class="entry-row"><span class="entry-label">Rhythm</span><input class="entry-input" id="ecg-rhythm" placeholder="e.g. Sinus rhythm"></div>
+                            <div class="entry-row"><span class="entry-label">PR (ms)</span><input class="entry-input" id="ecg-pr" placeholder="e.g. 160"></div>
+                            <div class="entry-row"><span class="entry-label">QRS (ms)</span><input class="entry-input" id="ecg-qrs" placeholder="e.g. 118"></div>
+                            <div class="entry-row"><span class="entry-label">QT/QTc (ms)</span><input class="entry-input" id="ecg-qt" placeholder="e.g. 400/420"></div>
+                            <div class="entry-row"><span class="entry-label">Key Findings</span><input class="entry-input" id="ecg-findings" placeholder="e.g. Normal" style="width:200px;"></div>
+                            <div class="entry-section-title">Troponin</div>
+                            <div class="entry-row"><span class="entry-label">Troponin I (pg/mL)</span><input class="entry-input" id="ecg-troponin" placeholder="e.g. 4.2"></div>
+                            <div class="entry-row" style="width:100%;margin-top:6px;">
+                                <button class="entry-save-btn" onclick="saveECGEntry()">💾 Save Reading</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: Echo -->
+            <div class="tab-panel" id="tab-echo">
+                <div class="section section-neonyellow">
+                    <div class="section-header">2. Echocardiogram (Heart Ultrasound) 2024</div>
+                    <table>
+                        <thead><tr><th>Parameter</th><th>Value</th><th>Normal Range</th><th>Interpretation</th></tr></thead>
+                        <tbody>
+                            <tr><td><span class="tt" data-tt="ef">Ejection Fraction (EF)</span></td><td>65–70%</td><td>55–70%</td><td class="status-normal">Good / Preserved</td></tr>
+                            <tr><td><span class="tt" data-tt="lvh">Left Ventricular Hypertrophy</span></td><td>Mild eccentric</td><td>None</td><td class="status-warning">Mild (likely hypertension-related)</td></tr>
+                            <tr><td><span class="tt" data-tt="mr">Mitral Regurgitation</span></td><td>Mild</td><td>None/Trace</td><td class="status-normal">Mild (common)</td></tr>
+                            <tr><td><span class="tt" data-tt="wallmotion">Wall Motion</span></td><td>Mild abnormalities</td><td>Normal</td><td class="status-warning">Mild hypokinesia</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size:0.85rem;color:#555;">Main Conclusion: Mild LV changes with preserved systolic function.</p>
+                </div>
+            </div>
+
+            <!-- TAB 3: Carotid -->
+            <div class="tab-panel" id="tab-carotid">
+                <div class="section section-red">
+                    <div class="section-header">3. Carotid Artery Ultrasound (20 Feb 2025)</div>
+                    <table>
+                        <thead><tr><th>Artery</th><th><span class="tt" data-tt="imt">IMT (mm)</span></th><th><span class="tt" data-tt="psv">PSV (cm/s)</span></th><th><span class="tt" data-tt="plaque">Stenosis / Plaque</span></th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr><td>Right CCA</td><td>0.6</td><td>90</td><td>None</td><td class="status-normal">Normal</td></tr>
+                            <tr><td>Right ICA</td><td>—</td><td>90</td><td>None</td><td class="status-normal">Normal</td></tr>
+                            <tr><td>Left CCA</td><td>0.7</td><td>100</td><td>None</td><td class="status-normal">Normal</td></tr>
+                            <tr><td>Left ICA</td><td>—</td><td>80</td><td>None</td><td class="status-normal">Normal</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size:0.85rem;color:#555;">Normal Ranges: IMT &lt;0.9 mm | PSV &lt;125 cm/s | No plaque. Conclusion: Completely normal — no atherosclerosis detected.</p>
+                </div>
+            </div>
+
+            <!-- TAB 4: LFT -->
+            <div class="tab-panel" id="tab-lft">
+                <div class="section section-neongreen">
+                    <div class="section-header">4. Liver Function Test (LFT)</div>
+                    <p style="margin:0 0 10px;font-size:0.85rem;color:#064e2a;">Liver enzymes — AST, ALT, GGT, Bilirubin, CRP</p>
+                    <table>
+                        <thead><tr>
+                            <th>Date</th>
+                            <th><span class="tt" data-tt="ast">AST</span> (U/L)<br><span style="font-weight:400;font-size:0.78rem">&lt;42</span></th>
+                            <th><span class="tt" data-tt="alt">ALT</span> (U/L)<br><span style="font-weight:400;font-size:0.78rem">&lt;42</span></th>
+                            <th><span class="tt" data-tt="ggt">GGT</span> (U/L)<br><span style="font-weight:400;font-size:0.78rem">5–40</span></th>
+                            <th><span class="tt" data-tt="bilirubin">Bilirubin</span><br><span style="font-weight:400;font-size:0.78rem">0–3.4 mmol/L</span></th>
+                            <th><span class="tt" data-tt="crp">CRP</span> (mg/L)<br><span style="font-weight:400;font-size:0.78rem">&lt;5</span></th>
+                        </tr></thead>
+                        <tbody id="lftRows">
+                            <tr><td>17 Dec 2023</td><td class="status-normal">36</td><td class="status-normal">25</td><td class="status-normal">16</td><td>—</td><td>—</td></tr>
+                            <tr><td>23 Apr 2024</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                            <tr><td>13 Jun 2024</td><td class="status-normal">24.7</td><td class="status-normal">25.8</td><td>—</td><td class="status-normal">Negative</td><td class="status-warning">7.31 ↑</td></tr>
+                            <tr><td>20 Feb 2025</td><td class="status-normal">30</td><td class="status-normal">37.2</td><td>—</td><td>—</td><td>—</td></tr>
+                            <tr><td>28 Jun 2025</td><td class="status-normal">37</td><td class="status-normal">25</td><td>—</td><td>—</td><td>—</td></tr>
+                            <tr style="background:#f0fff4;"><td>24 Apr 2026</td><td class="status-normal">38</td><td class="status-normal">32</td><td>—</td><td>—</td><td class="status-normal">0.031 mg/dL ✓</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size:0.82rem;color:#555;">AST and ALT consistently within range. CRP excellent at latest reading (0.031 mg/dL) — major improvement from Jun 2024 spike of 7.31.</p>
+                    <div class="entry-panel">
+                        <button class="entry-toggle" onclick="toggleEntry('lftEntry')" style="color:#4ade80;">＋ Add New LFT Reading</button>
+                        <div class="entry-body" id="lftEntry">
+                            <div class="entry-section-title">Liver Function</div>
+                            <div class="entry-row"><span class="entry-label">Date</span><input class="entry-date-input" id="lft-date" type="date"></div>
+                            <div class="entry-row"><span class="entry-label">AST (U/L)</span><input class="entry-input" id="lft-ast" placeholder="normal &lt;42"></div>
+                            <div class="entry-row"><span class="entry-label">ALT (U/L)</span><input class="entry-input" id="lft-alt" placeholder="normal &lt;42"></div>
+                            <div class="entry-row"><span class="entry-label">GGT (U/L)</span><input class="entry-input" id="lft-ggt" placeholder="normal 5–40"></div>
+                            <div class="entry-row"><span class="entry-label">Bilirubin</span><input class="entry-input" id="lft-bili" placeholder="0–3.4 mmol/L"></div>
+                            <div class="entry-row"><span class="entry-label">CRP (mg/L)</span><input class="entry-input" id="lft-crp" placeholder="normal &lt;5"></div>
+                            <div class="entry-row" style="width:100%;margin-top:6px;">
+                                <button class="entry-save-btn" onclick="saveLFTEntry()">💾 Save Reading</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: KFT -->
+            <div class="tab-panel" id="tab-kft">
+                <div class="section section-purple">
+                    <div class="section-header">5. Kidney Function Test (KFT)</div>
+                    <p style="margin:0 0 10px;font-size:0.85rem;color:#3b0764;">Kidney filtration — eGFR, Urea, Creatinine, uACR</p>
+                    <table>
+                        <thead><tr>
+                            <th>Date</th>
+                            <th><span class="tt" data-tt="egfr">eGFR</span><br><span style="font-weight:400;font-size:0.78rem">&gt;60</span></th>
+                            <th><span class="tt" data-tt="urea">Urea</span><br><span style="font-weight:400;font-size:0.78rem">1.7–8.3 mmol/L</span></th>
+                            <th><span class="tt" data-tt="creatinine">Creatinine</span><br><span style="font-weight:400;font-size:0.78rem">44–132 µmol/L / 0.5–1.5 mg/dL</span></th>
+                            <th><span class="tt" data-tt="uacr">uACR</span><br><span style="font-weight:400;font-size:0.78rem">0–30 mg/g</span></th>
+                        </tr></thead>
+                        <tbody id="kftRows">
+                            <tr><td>17 Dec 2023</td><td>—</td><td class="status-normal">5.2 mmol/L</td><td class="status-normal">84 µmol/L</td><td>—</td></tr>
+                            <tr><td>23 Apr 2024</td><td class="status-normal">83.8</td><td>—</td><td class="status-normal">1.0 mg/dL</td><td class="status-normal">3.07 mg/g</td></tr>
+                            <tr><td>13 Jun 2024</td><td class="status-normal">76.31</td><td class="status-normal">6.2 mmol/L</td><td class="status-normal">95.8 µmol/L</td><td>—</td></tr>
+                            <tr><td>20 Feb 2025</td><td class="status-normal">83.73</td><td>—</td><td class="status-normal">0.99 mg/dL</td><td>—</td></tr>
+                            <tr><td>28 Jun 2025</td><td>—</td><td class="status-normal">4.9 mmol/L</td><td class="status-normal">91 µmol/L</td><td>—</td></tr>
+                            <tr style="background:#f5f3ff;"><td>24 Apr 2026</td><td>—</td><td class="status-normal">7.3 mmol/L</td><td class="status-normal">93 µmol/L</td><td>—</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin:14px 0 8px;font-size:0.85rem;color:#3b0764;">Electrolytes &amp; Urinalysis</p>
+                    <table>
+                        <thead><tr>
+                            <th>Date</th>
+                            <th><span class="tt" data-tt="kplus">K⁺</span><br><span style="font-weight:400;font-size:0.78rem">3.5–5.5</span></th>
+                            <th><span class="tt" data-tt="naplus">Na⁺</span><br><span style="font-weight:400;font-size:0.78rem">136–145</span></th>
+                            <th><span class="tt" data-tt="chloride">Cl⁻</span><br><span style="font-weight:400;font-size:0.78rem">96–106</span></th>
+                            <th><span class="tt" data-tt="calcium">Calcium</span><br><span style="font-weight:400;font-size:0.78rem">2.15–2.57</span></th>
+                            <th><span class="tt" data-tt="ketones">Ketones</span></th><th><span class="tt" data-tt="sg">S.G.</span></th>
+                            <th><span class="tt" data-tt="ph">pH</span><br><span style="font-weight:400;font-size:0.78rem">4.8–7.4</span></th>
+                            <th><span class="tt" data-tt="protein">Protein</span><br><span style="font-weight:400;font-size:0.78rem">0–0.1 g/L</span></th>
+                            <th><span class="tt" data-tt="nitrate">Nitrate</span></th><th><span class="tt" data-tt="lue">Lue</span></th>
+                        </tr></thead>
+                        <tbody id="kftElecRows">
+                            <tr><td>17 Dec 2023</td><td class="status-normal">4.02</td><td class="status-normal">139.9</td><td class="status-warning">108 ↑</td><td class="status-normal">2.35</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                            <tr><td>13 Jun 2024</td><td class="status-normal">3.7</td><td class="status-normal">134.3</td><td class="status-normal">100.6</td><td class="status-normal">2.26</td><td class="status-normal">Neg</td><td>1.037</td><td class="status-normal">5</td><td class="status-warning">0.25 ↑</td><td class="status-normal">Neg</td><td class="status-normal">Neg</td></tr>
+                            <tr><td>28 Jun 2025</td><td class="status-normal">4.86</td><td class="status-normal">136.6</td><td class="status-warning">108 ↑</td><td class="status-normal">2.42</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size:0.82rem;color:#555;">eGFR consistently &gt;76 — excellent kidney filtration. Cl⁻ mildly elevated Dec 2023 &amp; Jun 2025. Urine protein slightly above range Jun 2024 only.</p>
+                    <div class="entry-panel">
+                        <button class="entry-toggle" onclick="toggleEntry('kftEntry')" style="color:#c084fc;">＋ Add New KFT Reading</button>
+                        <div class="entry-body" id="kftEntry">
+                            <div class="entry-section-title">Kidney Filtration</div>
+                            <div class="entry-row"><span class="entry-label">Date</span><input class="entry-date-input" id="kft-date" type="date"></div>
+                            <div class="entry-row"><span class="entry-label">eGFR</span><input class="entry-input" id="kft-egfr" placeholder="normal &gt;60"></div>
+                            <div class="entry-row"><span class="entry-label">Urea (mmol/L)</span><input class="entry-input" id="kft-urea" placeholder="1.7–8.3"></div>
+                            <div class="entry-row"><span class="entry-label">Creatinine</span><input class="entry-input" id="kft-creat" placeholder="44–132 µmol/L"></div>
+                            <div class="entry-row"><span class="entry-label">uACR (mg/g)</span><input class="entry-input" id="kft-uacr" placeholder="0–30"></div>
+                            <div class="entry-section-title">Electrolytes</div>
+                            <div class="entry-row"><span class="entry-label">K⁺ (mmol/L)</span><input class="entry-input" id="kft-k" placeholder="3.5–5.5"></div>
+                            <div class="entry-row"><span class="entry-label">Na⁺ (mmol/L)</span><input class="entry-input" id="kft-na" placeholder="136–145"></div>
+                            <div class="entry-row"><span class="entry-label">Cl⁻</span><input class="entry-input" id="kft-cl" placeholder="96–106"></div>
+                            <div class="entry-row"><span class="entry-label">Calcium (mmol/L)</span><input class="entry-input" id="kft-ca" placeholder="2.15–2.57"></div>
+                            <div class="entry-row" style="width:100%;margin-top:6px;">
+                                <button class="entry-save-btn" onclick="saveKFTEntry()">💾 Save Reading</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: Metabolic -->
+            <div class="tab-panel" id="tab-metabolic">
+                <div class="section section-orange">
+                    <div class="section-header">6. Metabolic Metrics</div>
+                    <p style="margin:0 0 10px;font-size:0.85rem;color:#7c2d12;">Cholesterol panel</p>
+                    <table>
+                        <thead><tr>
+                            <th>Date</th>
+                            <th><span class="tt" data-tt="nonhdl">non-HDL</span><br><span style="font-weight:400;font-size:0.78rem">&lt;130mg/0.9–2.07mmol</span></th>
+                            <th><span class="tt" data-tt="hdl">HDL</span><br><span style="font-weight:400;font-size:0.78rem">&gt;40 mg/dL</span></th>
+                            <th><span class="tt" data-tt="ldl">LDL</span><br><span style="font-weight:400;font-size:0.78rem">&lt;130mg/&lt;4.1mmol</span></th>
+                            <th><span class="tt" data-tt="totalchol">Total Chol.</span><br><span style="font-weight:400;font-size:0.78rem">&lt;200mg/3.6–6.2mmol</span></th>
+                            <th><span class="tt" data-tt="triglycerides">Triglycerides</span><br><span style="font-weight:400;font-size:0.78rem">25–160mg/0.7–2.2mmol</span></th>
+                        </tr></thead>
+                        <tbody id="metCholRows">
+                            <tr><td>17 Dec 2023</td><td class="status-normal">1.37 mmol/L</td><td>—</td><td class="status-normal">3.16 mmol/L</td><td class="status-normal">5.59 mmol/L</td><td class="status-normal">1.83 mmol/L</td></tr>
+                            <tr><td>23 Apr 2024</td><td class="status-warning">137.8 mg/dL ↑</td><td class="status-normal">52.5 mg/dL</td><td class="status-warning">134.8 mg/dL ↑</td><td class="status-normal">190.3 mg/dL</td><td class="status-normal">77.2 mg/dL</td></tr>
+                            <tr><td>20 Feb 2025</td><td class="status-warning">144 mg/dL ↑</td><td class="status-normal">52 mg/dL</td><td class="status-normal">128 mg/dL</td><td class="status-normal">196 mg/dL</td><td class="status-normal">65 mg/dL</td></tr>
+                            <tr><td>28 Jun 2025</td><td class="status-normal">1.46 mmol/L</td><td>—</td><td class="status-normal">3.34 mmol/L</td><td class="status-normal">5.91 mmol/L</td><td class="status-normal">1.37 mmol/L</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin:14px 0 8px;font-size:0.85rem;color:#7c2d12;">Blood Sugar — Glucose &amp; HbA1c</p>
+                    <table>
+                        <thead><tr>
+                            <th>Date</th>
+                            <th><span class="tt" data-tt="glucose">Glucose</span><br><span style="font-weight:400;font-size:0.78rem">70–110 mg/dL</span></th>
+                            <th><span class="tt" data-tt="hba1c">HbA1c</span><br><span style="font-weight:400;font-size:0.78rem">4.8–5.9%</span></th>
+                        </tr></thead>
+                        <tbody id="metGlucRows">
+                            <tr><td>17 Dec 2023</td><td class="status-normal">100 mg/dL</td><td>—</td></tr>
+                            <tr><td>23 Apr 2024</td><td class="status-normal">96.9 mg/dL</td><td>—</td></tr>
+                            <tr><td>13 Jun 2024</td><td class="status-warning">6.89 mmol/L ↑</td><td>—</td></tr>
+                            <tr><td>03 Sep 2024</td><td class="status-warning">129 mg/dL ↑</td><td>—</td></tr>
+                            <tr><td>28 Sep 2024</td><td class="status-normal">101 mg/dL</td><td>—</td></tr>
+                            <tr><td>20 Feb 2025</td><td class="status-normal">100 mg/dL</td><td>—</td></tr>
+                            <tr><td>24 Feb 2025</td><td>—</td><td class="status-normal">5.2%</td></tr>
+                            <tr><td>28 Jun 2025</td><td class="status-normal">95 mg/dL</td><td>—</td></tr>
+                            <tr style="background:#fff7ed;"><td>24 Apr 2026</td><td class="status-normal">103 mg/dL</td><td>—</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size:0.82rem;color:#555;">Glucose spikes Jun–Sep 2024 fully resolved. HbA1c 5.2% confirms excellent long-term blood sugar control. Cholesterol improving — LDL and non-HDL trended back to normal by Jun 2025.</p>
+                    <div class="entry-panel">
+                        <button class="entry-toggle" onclick="toggleEntry('metEntry')" style="color:#fb923c;">＋ Add New Metabolic Reading</button>
+                        <div class="entry-body" id="metEntry">
+                            <div class="entry-section-title">Cholesterol</div>
+                            <div class="entry-row"><span class="entry-label">Date</span><input class="entry-date-input" id="met-date" type="date"></div>
+                            <div class="entry-row"><span class="entry-label">non-HDL</span><input class="entry-input" id="met-nonhdl" placeholder="&lt;130 mg/dL"></div>
+                            <div class="entry-row"><span class="entry-label">HDL</span><input class="entry-input" id="met-hdl" placeholder="&gt;40 mg/dL"></div>
+                            <div class="entry-row"><span class="entry-label">LDL</span><input class="entry-input" id="met-ldl" placeholder="&lt;130 mg/dL"></div>
+                            <div class="entry-row"><span class="entry-label">Total Cholesterol</span><input class="entry-input" id="met-total" placeholder="&lt;200 mg/dL"></div>
+                            <div class="entry-row"><span class="entry-label">Triglycerides</span><input class="entry-input" id="met-tri" placeholder="25–160 mg/dL"></div>
+                            <div class="entry-section-title">Blood Sugar</div>
+                            <div class="entry-row"><span class="entry-label">Glucose</span><input class="entry-input" id="met-glucose" placeholder="70–110 mg/dL"></div>
+                            <div class="entry-row"><span class="entry-label">HbA1c (%)</span><input class="entry-input" id="met-hba1c" placeholder="4.8–5.9%"></div>
+                            <div class="entry-row" style="width:100%;margin-top:6px;">
+                                <button class="entry-save-btn" onclick="saveMetEntry()">💾 Save Reading</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 7: Blood Panel -->
+            <div class="tab-panel" id="tab-blood">
+                <div class="section section-teal">
+                    <div class="section-header">7. Blood Panel (Full Blood Count)</div>
+                    <p style="margin:0 0 8px;font-size:0.85rem;color:#134e4a;">White Blood Cells</p>
+                    <table>
+                        <thead><tr>
+                            <th>Date</th>
+                            <th><span class="tt" data-tt="wbc">WBC</span><br><span style="font-weight:400;font-size:0.78rem">3.6–10.2</span></th>
+                            <th><span class="tt" data-tt="neu">NEU</span><br><span style="font-weight:400;font-size:0.78rem">1.7–7.6</span></th>
+                            <th><span class="tt" data-tt="pctne">%NE</span><br><span style="font-weight:400;font-size:0.78rem">43.5–73.5%</span></th>
+                            <th><span class="tt" data-tt="lym">LYM</span><br><span style="font-weight:400;font-size:0.78rem">1.0–3.2</span></th>
+                            <th><span class="tt" data-tt="lym">%LY</span><br><span style="font-weight:400;font-size:0.78rem">15.2–43.3%</span></th>
+                            <th><span class="tt" data-tt="mono">MONO</span><br><span style="font-weight:400;font-size:0.78rem">0.3–1.1</span></th>
+                            <th><span class="tt" data-tt="mono">%MO</span><br><span style="font-weight:400;font-size:0.78rem">3.4–13.7%</span></th>
+                            <th><span class="tt" data-tt="eos">EOS</span><br><span style="font-weight:400;font-size:0.78rem">0–0.5</span></th>
+                            <th><span class="tt" data-tt="eos">%EO</span><br><span style="font-weight:400;font-size:0.78rem">0–8.1%</span></th>
+                            <th><span class="tt" data-tt="baso">BASO</span></th><th><span class="tt" data-tt="baso">%BA</span></th>
+                        </tr></thead>
+                        <tbody id="bloodWBCRows">
+                            <tr><td>17 Dec 2023</td><td class="status-normal">7.49</td><td class="status-normal">3.65</td><td>—</td><td class="status-normal">2.78</td><td>—</td><td class="status-normal">0.67</td><td>—</td><td class="status-normal">0.35</td><td>—</td><td>0.04</td><td>—</td></tr>
+                            <tr><td>13 Jun 2024</td><td class="status-warning">11.7 ↑</td><td class="status-warning">10.3 ↑</td><td class="status-warning">88.5% ↑</td><td class="status-warning">0.32 ↓</td><td class="status-warning">2.81% ↓</td><td class="status-warning">0.94 ↑</td><td class="status-normal">8.1%</td><td class="status-normal">0.035</td><td class="status-normal">0.3%</td><td>0.027</td><td>0.23%</td></tr>
+                            <tr><td>24 Feb 2025</td><td class="status-normal">6.48</td><td class="status-normal">3.87</td><td class="status-normal">59.7%</td><td class="status-normal">1.71</td><td class="status-normal">26.4%</td><td class="status-normal">0.61</td><td class="status-normal">9.4%</td><td class="status-normal">0.26</td><td class="status-normal">4.0%</td><td>0.03</td><td>0.5%</td></tr>
+                            <tr style="background:#e6fffe;"><td>24 Apr 2026</td><td class="status-normal">8.3</td><td class="status-normal">5.4</td><td class="status-normal">64.5%</td><td class="status-normal">1.9</td><td class="status-normal">22.4%</td><td class="status-normal">0.7</td><td class="status-normal">9.0%</td><td class="status-normal">0.3</td><td class="status-normal">3.6%</td><td>0.0</td><td>0.5%</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size:0.82rem;color:#555;">Jun 2024 — acute infection pattern (high WBC/NEU, low LYM). Fully normalised by Feb 2025 and confirmed normal Apr 2026.</p>
+
+                    <p style="margin:14px 0 8px;font-size:0.85rem;color:#134e4a;">Red Blood Cells</p>
+                    <table>
+                        <thead><tr>
+                            <th>Date</th>
+                            <th><span class="tt" data-tt="rbc">RBC</span><br><span style="font-weight:400;font-size:0.78rem">4.06–5.63</span></th>
+                            <th><span class="tt" data-tt="hgb">HGB</span><br><span style="font-weight:400;font-size:0.78rem">12–16.2 g/dL</span></th>
+                            <th><span class="tt" data-tt="hct">HCT %</span><br><span style="font-weight:400;font-size:0.78rem">36–48.6%</span></th>
+                            <th><span class="tt" data-tt="mcv">MCV</span><br><span style="font-weight:400;font-size:0.78rem">73–96.2 fL</span></th>
+                            <th><span class="tt" data-tt="mch">MCH</span><br><span style="font-weight:400;font-size:0.78rem">23.8–33.4</span></th>
+                            <th><span class="tt" data-tt="mchc">MCHC</span><br><span style="font-weight:400;font-size:0.78rem">31–36.3</span></th>
+                            <th><span class="tt" data-tt="rdw">RDW %</span><br><span style="font-weight:400;font-size:0.78rem">11.5–16.2%</span></th>
+                            <th><span class="tt" data-tt="nrbc">NRBC</span></th>
+                        </tr></thead>
+                        <tbody id="bloodRBCRows">
+                            <tr><td>17 Dec 2023</td><td class="status-normal">4.83</td><td class="status-normal">15.8</td><td class="status-normal">45.4%</td><td class="status-normal">94</td><td class="status-normal">32.7</td><td class="status-normal">34.8</td><td>—</td><td class="status-normal">0/100WBC</td></tr>
+                            <tr><td>13 Jun 2024</td><td class="status-normal">4.55</td><td class="status-normal">14.9</td><td class="status-normal">42.6%</td><td class="status-normal">93.7</td><td class="status-normal">32.7</td><td class="status-normal">34.9</td><td>—</td><td>—</td></tr>
+                            <tr><td>24 Feb 2025</td><td class="status-normal">4.59</td><td class="status-normal">14.3</td><td class="status-normal">41.6%</td><td class="status-normal">90.6</td><td class="status-normal">31.2</td><td class="status-normal">34.4</td><td class="status-normal">12.7%</td><td>—</td></tr>
+                            <tr style="background:#e6fffe;"><td>24 Apr 2026</td><td class="status-normal">4.84</td><td class="status-normal">15.5</td><td class="status-normal">46.8%</td><td class="status-warning">96.7 ↑</td><td class="status-normal">32.1</td><td class="status-normal">33.2</td><td class="status-normal">13.7%</td><td class="status-normal">0.01</td></tr>
+                        </tbody>
+                    </table>
+
+                    <p style="margin:14px 0 8px;font-size:0.85rem;color:#134e4a;">Platelets</p>
+                    <table>
+                        <thead><tr>
+                            <th>Date</th>
+                            <th><span class="tt" data-tt="plt">PLT</span><br><span style="font-weight:400;font-size:0.78rem">100–500 ×10³/µL</span></th>
+                            <th><span class="tt" data-tt="mpv">MPV</span><br><span style="font-weight:400;font-size:0.78rem">6–11.4 fL</span></th>
+                        </tr></thead>
+                        <tbody id="bloodPLTRows">
+                            <tr><td>17 Dec 2023</td><td class="status-normal">218</td><td class="status-normal">9.4</td></tr>
+                            <tr><td>13 Jun 2024</td><td class="status-normal">197</td><td class="status-normal">7.4</td></tr>
+                            <tr><td>24 Feb 2025</td><td class="status-normal">191</td><td class="status-warning">10.2 ↑</td></tr>
+                            <tr style="background:#e6fffe;"><td>24 Apr 2026</td><td class="status-normal">224</td><td class="status-normal">7.2</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size:0.82rem;color:#555;">Platelet count consistently normal. MPV elevated Feb 2025 — normalised by Apr 2026. MCV marginally above range Apr 2026 — not clinically significant in isolation.</p>
+                    <div class="entry-panel">
+                        <button class="entry-toggle" onclick="toggleEntry('bloodEntry')" style="color:#5eead4;">＋ Add New Blood Panel Reading</button>
+                        <div class="entry-body" id="bloodEntry">
+                            <div class="entry-section-title">Full Blood Count</div>
+                            <div class="entry-row"><span class="entry-label">Date</span><input class="entry-date-input" id="blood-date" type="date"></div>
+                            <div class="entry-row"><span class="entry-label">WBC</span><input class="entry-input" id="blood-wbc" placeholder="3.6–10.2"></div>
+                            <div class="entry-row"><span class="entry-label">NEU</span><input class="entry-input" id="blood-neu" placeholder="1.7–7.6"></div>
+                            <div class="entry-row"><span class="entry-label">LYM</span><input class="entry-input" id="blood-lym" placeholder="1.0–3.2"></div>
+                            <div class="entry-row"><span class="entry-label">RBC</span><input class="entry-input" id="blood-rbc" placeholder="4.06–5.63"></div>
+                            <div class="entry-row"><span class="entry-label">HGB (g/dL)</span><input class="entry-input" id="blood-hgb" placeholder="12–16.2"></div>
+                            <div class="entry-row"><span class="entry-label">HCT (%)</span><input class="entry-input" id="blood-hct" placeholder="36–48.6"></div>
+                            <div class="entry-row"><span class="entry-label">MCV (fL)</span><input class="entry-input" id="blood-mcv" placeholder="73–96.2"></div>
+                            <div class="entry-row"><span class="entry-label">PLT</span><input class="entry-input" id="blood-plt" placeholder="100–500"></div>
+                            <div class="entry-row"><span class="entry-label">MPV (fL)</span><input class="entry-input" id="blood-mpv" placeholder="6–11.4"></div>
+                            <div class="entry-row" style="width:100%;margin-top:6px;">
+                                <button class="entry-save-btn" onclick="saveBloodEntry()">💾 Save Reading</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 8: Overall Assessment -->
+            <div class="tab-panel" id="tab-overall">
+                <div class="section section-yellow">
+                    <div class="section-header">Overall Integrated Assessment</div>
+                    <table>
+                        <thead><tr><th>Category</th><th>Latest Finding</th><th>Trend</th><th>Concern Level</th></tr></thead>
+                        <tbody id="assessmentBody">
+                            <tr><td>Rhythm &amp; Electrical (ECG)</td><td id="ass-ecg-finding">Stable sinus rhythm; flattened T waves Jun 2026</td><td id="ass-ecg-trend">Monitor</td><td id="ass-ecg-concern" class="status-warning">Watch</td></tr>
+                            <tr><td>Troponin</td><td id="ass-trop-finding">3 pg/mL (Dec 2023) — within normal</td><td id="ass-trop-trend">Normal</td><td id="ass-trop-concern" class="status-normal">Low</td></tr>
+                            <tr><td>Heart Function (Echo)</td><td id="ass-echo-finding">EF 65–70%; mild LV hypertrophy</td><td id="ass-echo-trend">Stable</td><td id="ass-echo-concern" class="status-warning">Mild–Moderate</td></tr>
+                            <tr><td>Blood Vessels (Carotid)</td><td id="ass-carotid-finding">Completely normal, no plaque</td><td id="ass-carotid-trend">Excellent</td><td id="ass-carotid-concern" class="status-normal">Very Good</td></tr>
+                            <tr><td>Liver — AST</td><td id="ass-ast-finding">—</td><td id="ass-ast-trend">—</td><td id="ass-ast-concern">—</td></tr>
+                            <tr><td>Liver — ALT</td><td id="ass-alt-finding">—</td><td id="ass-alt-trend">—</td><td id="ass-alt-concern">—</td></tr>
+                            <tr><td>Liver — CRP</td><td id="ass-crp-finding">—</td><td id="ass-crp-trend">—</td><td id="ass-crp-concern">—</td></tr>
+                            <tr><td>Kidney — eGFR</td><td id="ass-egfr-finding">—</td><td id="ass-egfr-trend">—</td><td id="ass-egfr-concern">—</td></tr>
+                            <tr><td>Kidney — Creatinine</td><td id="ass-creat-finding">—</td><td id="ass-creat-trend">—</td><td id="ass-creat-concern">—</td></tr>
+                            <tr><td>Cholesterol — LDL</td><td id="ass-ldl-finding">—</td><td id="ass-ldl-trend">—</td><td id="ass-ldl-concern">—</td></tr>
+                            <tr><td>Cholesterol — non-HDL</td><td id="ass-nonhdl-finding">—</td><td id="ass-nonhdl-trend">—</td><td id="ass-nonhdl-concern">—</td></tr>
+                            <tr><td>Blood Sugar — Glucose</td><td id="ass-gluc-finding">—</td><td id="ass-gluc-trend">—</td><td id="ass-gluc-concern">—</td></tr>
+                            <tr><td>Blood Sugar — HbA1c</td><td id="ass-hba1c-finding">—</td><td id="ass-hba1c-trend">—</td><td id="ass-hba1c-concern">—</td></tr>
+                            <tr><td>Blood Panel — WBC</td><td id="ass-wbc-finding">—</td><td id="ass-wbc-trend">—</td><td id="ass-wbc-concern">—</td></tr>
+                            <tr><td>Blood Panel — HGB</td><td id="ass-hgb-finding">—</td><td id="ass-hgb-trend">—</td><td id="ass-hgb-concern">—</td></tr>
+                            <tr><td>Blood Panel — PLT / MPV</td><td id="ass-plt-finding">—</td><td id="ass-plt-trend">—</td><td id="ass-plt-concern">—</td></tr>
+                            <tr><td>Blood Pressure</td><td id="bpAssessment">— (add readings above)</td><td id="bpTrend">—</td><td id="bpConcern" class="status-monitor">—</td></tr>
+                            <tr><td>BMI / Weight</td><td id="bmiAssessment">— (add height &amp; weight above)</td><td id="bmiTrend">—</td><td id="bmiConcern" class="status-monitor">—</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3 style="color:var(--yellow-dark);margin-top:22px;">Key Takeaways</h3>
+                    <div style="font-size:0.88rem;line-height:1.7;">
+                        <ul>
+                            <li id="kt-strengths"><strong>Strengths:</strong> <span id="kt-strengths-text">—</span></li>
+                            <li id="kt-watch"><strong>Areas to Watch:</strong> <span id="kt-watch-text">—</span></li>
+                            <li id="kt-priority"><strong>Priority Actions:</strong> <span id="kt-priority-text">—</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            <p class="disclaimer">This is a personal summary only. Not medical advice. Please consult your cardiologist for interpretation and next steps.</p>
+            <p>Generated with ❤️ for personal use • June 2026</p>
+        </div>
+
+    </div>
+<script>
+// ══════════════════════════════════════════════════════
+//  HEALTH HUB — COMPLETE SCRIPT v3
+// ══════════════════════════════════════════════════════
+
+// ── App data store (all live readings) ──
+const APP = {
+    lft:  [],  // [{date,ast,alt,ggt,bili,crp}]
+    kft:  [],  // [{date,egfr,urea,creat,uacr,k,na,cl,ca}]
+    met:  [],  // [{date,nonhdl,hdl,ldl,total,tri,glucose,hba1c}]
+    blood:[], // [{date,wbc,neu,lym,rbc,hgb,hct,mcv,mch,mchc,rdw,plt,mpv}]
+    ecg:  [],  // [{date,hr,rhythm,pr,qrs,qt,findings}]
+    trop: [],  // [{date,val}]
+};
+
+// ── Local storage helpers ──
+function getLog(key) { try { return JSON.parse(localStorage.getItem(key)||'[]'); } catch(e) { return []; } }
+function saveLog(key,arr) { try { localStorage.setItem(key,JSON.stringify(arr)); } catch(e) {} }
+function savePI() {
+    try {
+        localStorage.setItem('piName', document.getElementById('piName').value);
+        localStorage.setItem('piDOB',  document.getElementById('piDOB').value);
+    } catch(e) {}
+}
+function loadAppData() {
+    const saved = localStorage.getItem('appData');
+    if (saved) try { Object.assign(APP, JSON.parse(saved)); } catch(e) {}
+}
+function saveAppData() { try { localStorage.setItem('appData', JSON.stringify(APP)); } catch(e) {} }
+
+// ── Export JSON ──
+function exportJSON() {
+    const data = {
+        personal: {
+            name:   document.getElementById('piName').value,
+            dob:    document.getElementById('piDOB').value,
+            height: document.getElementById('piHeight').value,
+        },
+        weightLog: getLog('weightLog'),
+        bpLog:     getLog('bpLog'),
+        app:       APP,
+        exported:  new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'HealthHub_backup_' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+}
+
+// ── Import JSON ──
+function importJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (data.personal) {
+                if (data.personal.name)   { document.getElementById('piName').value   = data.personal.name;   savePI(); }
+                if (data.personal.dob)    { document.getElementById('piDOB').value    = data.personal.dob;    savePI(); calcAge(); }
+                if (data.personal.height) { document.getElementById('piHeight').value = data.personal.height; localStorage.setItem('piHeight', data.personal.height); }
+            }
+            if (data.weightLog) { saveLog('weightLog', data.weightLog); renderWeightLog(); }
+            if (data.bpLog)     { saveLog('bpLog', data.bpLog); renderBPLog(); }
+            if (data.app)       { Object.assign(APP, data.app); saveAppData(); }
+            calcBMI(); updateBPAssessment(); updateAssessment();
+            alert('✅ Data imported successfully!');
+        } catch(err) { alert('❌ Invalid file. Please use a HealthHub JSON backup.'); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
+// ── Tab switching ──
+function showTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    var panel = document.getElementById(id);
+    if (panel) panel.classList.add('active');
+    btn.classList.add('active');
+    if (id === 'tab-overall') updateAssessment();
+    if (window.innerWidth < 600) {
+        setTimeout(function() { panel.scrollIntoView({behavior:'smooth', block:'start'}); }, 80);
+    }
+}
+
+// ── Entry panel toggle ──
+function toggleEntry(id) { const el=document.getElementById(id); if(el) el.classList.toggle('open'); }
+
+// ── Age ──
+function calcAge() {
+    const dob = document.getElementById('piDOB').value;
+    if (!dob) return;
+    const t = new Date(), b = new Date(dob);
+    let age = t.getFullYear()-b.getFullYear();
+    const m = t.getMonth()-b.getMonth();
+    if (m<0||(m===0&&t.getDate()<b.getDate())) age--;
+    document.getElementById('piAge').textContent = age+' years old';
+    calcBMI();
+}
+
+// ── BMI ──
+function calcBMI() {
+    const log=getLog('weightLog'), lw=log.length?log[log.length-1].val:null;
+    const h=parseFloat(document.getElementById('piHeight').value);
+    const bmiEl=document.getElementById('piBMI'), assEl=document.getElementById('bmiAssessment');
+    const tEl=document.getElementById('bmiTrend'), cEl=document.getElementById('bmiConcern');
+    if (!lw||!h) {
+        if(bmiEl) bmiEl.innerHTML='<span style="color:#475569;">Enter height &amp; weight</span>';
+        if(assEl) assEl.textContent='—'; if(tEl) tEl.textContent='—';
+        if(cEl){cEl.textContent='—';cEl.className='status-monitor';} return;
+    }
+    const bmi=(lw/((h/100)*(h/100))).toFixed(1);
+    let cat,cls,trend,concern,cCls;
+    if(bmi<18.5){cat='Underweight';cls='bmi-under';trend='Below range';concern='Monitor nutrition';cCls='status-monitor';}
+    else if(bmi<25){cat='Normal';cls='bmi-normal';trend='Healthy range';concern='Very Good';cCls='status-normal';}
+    else if(bmi<30){cat='Overweight';cls='bmi-over';trend='Above ideal';concern='Mild — lifestyle focus';cCls='status-monitor';}
+    else if(bmi<35){cat='Obese I';cls='bmi-obese';trend='Elevated';concern='Moderate — action';cCls='status-warning';}
+    else{cat='Obese II+';cls='bmi-obese';trend='High';concern='High — seek advice';cCls='status-danger';}
+    const badge='<span class="bmi-badge '+cls+'">'+cat+'</span>';
+    if(bmiEl) bmiEl.innerHTML='<strong>'+bmi+'</strong> kg/m² '+badge;
+    if(assEl) assEl.innerHTML=bmi+' kg/m² '+badge+' · '+lw+' kg / '+h+' cm';
+    if(tEl) tEl.textContent=trend;
+    if(cEl){cEl.textContent=concern;cEl.className=cCls;}
+}
+
+// ── Weight log ──
+function addWeightEntry() {
+    const val=prompt('Enter weight in kg (e.g. 82.5):');
+    if(val===null||val.trim()==='') return;
+    const n=parseFloat(val);
+    if(isNaN(n)||n<20||n>300){alert('Enter a valid weight (20–300 kg)');return;}
+    const log=getLog('weightLog');
+    log.push({val:n,date:new Date().toLocaleDateString('en-GB')});
+    saveLog('weightLog',log); renderWeightLog(); calcBMI();
+}
+function renderWeightLog() {
+    const log=getLog('weightLog'),el=document.getElementById('weightLog');
+    if(!el) return;
+    if(!log.length){el.innerHTML='<div style="font-size:0.72rem;color:#475569;padding:3px 0;">No readings yet — tap ＋ Add</div>';return;}
+    el.innerHTML=log.slice(-4).reverse().map(e=>'<div class="log-entry">⚖️ <span class="log-val-weight">'+e.val+' kg</span><span class="log-date">📅 '+e.date+'</span></div>').join('');
+}
+function resetLog(key,type) {
+    if(!confirm('Clear all '+(type==='bp'?'blood pressure':'weight')+' readings?')) return;
+    saveLog(key,[]);
+    if(type==='weight'){renderWeightLog();calcBMI();}
+    else{renderBPLog();updateBPAssessment();}
+}
+
+// ── BP log ──
+function bpCat(sys,dia) {
+    if(sys<120&&dia<80) return{label:'Optimal',color:'#4ade80',bg:'#052e16',trend:'Excellent',concern:'Very Good',cCls:'status-normal'};
+    if(sys<130&&dia<85) return{label:'Normal',color:'#a3e635',bg:'#1a2e05',trend:'Good',concern:'Low',cCls:'status-normal'};
+    if(sys<140&&dia<90) return{label:'High-normal',color:'#fb923c',bg:'#431407',trend:'Monitor',concern:'Mild — monitor',cCls:'status-monitor'};
+    if(sys<160&&dia<100)return{label:'Stage 1 ↑',color:'#f87171',bg:'#450a0a',trend:'Elevated',concern:'Moderate — action needed',cCls:'status-warning'};
+    return{label:'Stage 2 ↑↑',color:'#ef4444',bg:'#3b0000',trend:'High',concern:'High — seek advice',cCls:'status-danger'};
+}
+function addBPEntry() {
+    const val=prompt('Enter BP (format: 125/80):');
+    if(val===null||val.trim()==='') return;
+    if(!/^\d{2,3}\/\d{2,3}$/.test(val.trim())){alert('Use format 125/80');return;}
+    const log=getLog('bpLog');
+    log.push({val:val.trim(),date:new Date().toLocaleDateString('en-GB')});
+    saveLog('bpLog',log); renderBPLog(); updateBPAssessment();
+}
+function renderBPLog() {
+    const log=getLog('bpLog'),el=document.getElementById('bpLog');
+    if(!el) return;
+    if(!log.length){el.innerHTML='<div style="font-size:0.72rem;color:#475569;padding:3px 0;">No readings yet — tap ＋ Add</div>';return;}
+    el.innerHTML=log.slice(-4).reverse().map(e=>{
+        const p=e.val.match(/(\d+)\/(\d+)/);
+        let badge='';
+        if(p){const c=bpCat(+p[1],+p[2]);badge='<span style="color:'+c.color+';font-size:0.65rem;margin-left:3px;">'+c.label+'</span>';}
+        return'<div class="log-entry">🩺 <span class="log-val-bp">'+e.val+'</span>'+badge+'<span class="log-date">📅 '+e.date+'</span></div>';
+    }).join('');
+}
+function updateBPAssessment() {
+    const log=getLog('bpLog');
+    const aEl=document.getElementById('bpAssessment'),tEl=document.getElementById('bpTrend'),cEl=document.getElementById('bpConcern');
+    if(!aEl) return;
+    if(!log.length){aEl.textContent='— (add readings above)';if(tEl)tEl.textContent='—';if(cEl){cEl.textContent='—';cEl.className='status-monitor';}return;}
+    const latest=log[log.length-1],p=latest.val.match(/(\d+)\/(\d+)/);
+    if(!p){aEl.textContent=latest.val;return;}
+    const c=bpCat(+p[1],+p[2]);
+    aEl.innerHTML=latest.val+' mmHg <span class="bmi-badge" style="background:'+c.bg+';color:'+c.color+';border:1px solid '+c.color+';">'+c.label+'</span> · '+latest.date;
+    if(tEl)tEl.textContent=c.trend;
+    if(cEl){cEl.textContent=c.concern;cEl.className=c.cCls;}
+}
+
+// ── Entry helpers ──
+function v(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+function clearFields(ids){ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});}
+function fmtDate(d){return d?new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';}
+function flagCell(val,lo,hi,unit){
+    if(!val) return '—';
+    const n=parseFloat(val); if(isNaN(n)) return val+' '+(unit||'');
+    if(n<lo||n>hi) return '<span class="status-warning">'+val+' '+(unit||'')+' ↑</span>';
+    return '<span class="status-normal">'+val+' '+(unit||'')+'</span>';
+}
+function addRow(tbId,cells){
+    const tb=document.getElementById(tbId); if(!tb) return;
+    const tr=document.createElement('tr'); tr.style.background='#f0f9ff';
+    tr.innerHTML=cells.map(c=>'<td>'+c+'</td>').join(''); tb.appendChild(tr);
+}
+
+// ── Get latest non-empty value across all entries for a field ──
+function latestVal(arr, field) {
+    for (let i = arr.length - 1; i >= 0; i--) {
+        const v = arr[i][field];
+        if (v !== '' && v !== null && v !== undefined) return {val: v, date: arr[i].date};
+    }
+    return null;
+}
+
+// ── Dynamic overall assessment ──
+function setAss(prefix, result) {
+    if (!result) return;
+    const f = document.getElementById('ass-'+prefix+'-finding');
+    const t = document.getElementById('ass-'+prefix+'-trend');
+    const c = document.getElementById('ass-'+prefix+'-concern');
+    if (f) f.textContent = result.finding;
+    if (t) t.textContent = result.trend;
+    if (c) { c.textContent = result.concern; c.className = result.cls; }
+}
+
+function assessVal(entry, lo, hi, unit, label) {
+    if (!entry) return null;
+    const n = parseFloat(entry.val);
+    if (isNaN(n)) return null;
+    const ok = n >= lo && n <= hi;
+    return {
+        finding: label + ': ' + entry.val + ' ' + (unit||'') + ' (' + entry.date + ')',
+        trend:   ok ? 'Normal' : 'Outside range',
+        concern: ok ? 'Normal' : 'Monitor ↑',
+        cls:     ok ? 'status-normal' : 'status-warning'
+    };
+}
+
+function updateAssessment() {
+    // LFT
+    setAss('ast',    assessVal(latestVal(APP.lft,  'ast'),     0,   42,    'U/L',     'AST'));
+    setAss('alt',    assessVal(latestVal(APP.lft,  'alt'),     0,   42,    'U/L',     'ALT'));
+    setAss('crp',    assessVal(latestVal(APP.lft,  'crp'),     0,   5,     'mg/L',    'CRP'));
+    // KFT
+    setAss('egfr',   assessVal(latestVal(APP.kft,  'egfr'),   60,  200,    'mL/min',  'eGFR'));
+    setAss('creat',  assessVal(latestVal(APP.kft,  'creat'),  44,  132,    'µmol/L',  'Creatinine'));
+    // Metabolic — LDL stored as mg/dL in historical data
+    setAss('ldl',    assessVal(latestVal(APP.met,  'ldl'),     0,  130,    'mg/dL',   'LDL'));
+    setAss('nonhdl', assessVal(latestVal(APP.met,  'nonhdl'),  0,  130,    'mg/dL',   'non-HDL'));
+    setAss('gluc',   assessVal(latestVal(APP.met,  'glucose'), 70, 110,    'mg/dL',   'Glucose'));
+    setAss('hba1c',  assessVal(latestVal(APP.met,  'hba1c'),  4.8,  6.0,  '%',        'HbA1c'));
+    // Blood panel
+    setAss('wbc',    assessVal(latestVal(APP.blood,'wbc'),    3.6,  10.2,  '×10³/µL', 'WBC'));
+    setAss('hgb',    assessVal(latestVal(APP.blood,'hgb'),   12,   16.2,   'g/dL',    'HGB'));
+    setAss('plt',    assessVal(latestVal(APP.blood,'plt'),   100,   500,   '×10³/µL', 'PLT'));
+    // Troponin
+    setAss('trop',   assessVal(latestVal(APP.trop, 'val'),    0,    26,    'pg/mL',   'Troponin'));
+
+    // Key Takeaways
+    const strengths = [], watch = [], actions = [];
+    const lftAST  = latestVal(APP.lft,   'ast');
+    const lftCRP  = latestVal(APP.lft,   'crp');
+    const kftEGFR = latestVal(APP.kft,   'egfr');
+    const metHBA  = latestVal(APP.met,   'hba1c');
+    const metLDL  = latestVal(APP.met,   'ldl');
+    const metNHDL = latestVal(APP.met,   'nonhdl');
+    const metGluc = latestVal(APP.met,   'glucose');
+    const bldWBC  = latestVal(APP.blood, 'wbc');
+
+    strengths.push('Stable sinus rhythm, clean carotid arteries (no plaque), EF 65–70% preserved');
+    if (lftAST && parseFloat(lftAST.val) <= 42) strengths.push('Liver enzymes (AST/ALT) within normal range');
+    if (lftCRP && parseFloat(lftCRP.val) < 5)  strengths.push('CRP ' + lftCRP.val + ' mg/L — low inflammation');
+    if (kftEGFR && parseFloat(kftEGFR.val) >= 60) strengths.push('Kidney filtration eGFR ' + kftEGFR.val + ' — excellent');
+    if (metHBA  && parseFloat(metHBA.val) < 6)  strengths.push('HbA1c ' + metHBA.val + '% — good blood sugar control');
+    if (bldWBC  && parseFloat(bldWBC.val) <= 10.2) strengths.push('Blood panel WBC normal');
+
+    watch.push('Mild LV hypertrophy — manage blood pressure closely');
+    watch.push('Flattened T waves Jun 2026 — discuss with cardiologist');
+    if (lftCRP  && parseFloat(lftCRP.val) > 5)   watch.push('CRP elevated (' + lftCRP.val + ' mg/L) — inflammation raised');
+    if (metLDL  && parseFloat(metLDL.val) > 130)  watch.push('LDL ' + metLDL.val + ' mg/dL — above target');
+    if (metNHDL && parseFloat(metNHDL.val) > 130) watch.push('non-HDL ' + metNHDL.val + ' mg/dL — above target');
+    if (metGluc && parseFloat(metGluc.val) > 110) watch.push('Glucose ' + metGluc.val + ' mg/dL — above normal');
+    if (bldWBC  && parseFloat(bldWBC.val) > 10.2) watch.push('WBC elevated (' + bldWBC.val + ') — check for infection');
+
+    actions.push('Continue BP control and lifestyle measures');
+    actions.push('Repeat ECG — monitor T-wave finding');
+    if (metLDL && parseFloat(metLDL.val) > 130)  actions.push('Review cholesterol — dietary changes or medication');
+    if (lftCRP && parseFloat(lftCRP.val) > 5)    actions.push('Recheck CRP at next blood test');
+
+    const sEl = document.getElementById('kt-strengths-text');
+    const wEl = document.getElementById('kt-watch-text');
+    const pEl = document.getElementById('kt-priority-text');
+    if (sEl) sEl.textContent = strengths.join('; ');
+    if (wEl) wEl.textContent = watch.join('; ');
+    if (pEl) pEl.textContent = actions.join('; ');
+}
+// ── ECG entry ──
+function saveECGEntry() {
+    const d=v('ecg-date'); if(!d){alert('Please enter a date');return;}
+    const entry={date:fmtDate(d),hr:v('ecg-hr'),rhythm:v('ecg-rhythm'),pr:v('ecg-pr'),qrs:v('ecg-qrs'),qt:v('ecg-qt'),findings:v('ecg-findings')};
+    const trop=v('ecg-troponin');
+    addRow('ecgRows',[entry.date,entry.hr||'—',entry.rhythm||'—',entry.pr||'—',
+        entry.qrs?flagCell(entry.qrs,60,120,'ms'):'—',entry.qt||'—',entry.findings||'—',
+        entry.qrs&&parseFloat(entry.qrs)>120?'<span class="status-warning">Monitor</span>':'<span class="status-normal">Normal</span>']);
+    if(trop){
+        const te={date:fmtDate(d),val:trop}; APP.trop.push(te);
+        addRow('troponinRows',[fmtDate(d),flagCell(trop,0,26,'pg/mL'),'&lt;26 pg/mL',
+            parseFloat(trop)>26?'<span class="status-warning">Elevated ↑</span>':'<span class="status-normal">Normal</span>','—']);
+    }
+    saveAppData(); updateAssessment();
+    clearFields(['ecg-date','ecg-hr','ecg-rhythm','ecg-pr','ecg-qrs','ecg-qt','ecg-findings','ecg-troponin']);
+    alert('ECG reading saved ✓');
+}
+
+// ── LFT entry ──
+function saveLFTEntry() {
+    const d=v('lft-date'); if(!d){alert('Please enter a date');return;}
+    const e={date:fmtDate(d),ast:v('lft-ast'),alt:v('lft-alt'),ggt:v('lft-ggt'),bili:v('lft-bili'),crp:v('lft-crp')};
+    APP.lft.push(e); saveAppData();
+    addRow('lftRows',[fmtDate(d),flagCell(e.ast,0,42,'U/L'),flagCell(e.alt,0,42,'U/L'),
+        flagCell(e.ggt,5,40,'U/L'),e.bili||'—',flagCell(e.crp,0,5,'mg/L')]);
+    clearFields(['lft-date','lft-ast','lft-alt','lft-ggt','lft-bili','lft-crp']);
+    updateAssessment(); alert('LFT reading saved ✓');
+}
+
+// ── KFT entry ──
+function saveKFTEntry() {
+    const d=v('kft-date'); if(!d){alert('Please enter a date');return;}
+    const e={date:fmtDate(d),egfr:v('kft-egfr'),urea:v('kft-urea'),creat:v('kft-creat'),uacr:v('kft-uacr'),k:v('kft-k'),na:v('kft-na'),cl:v('kft-cl'),ca:v('kft-ca')};
+    APP.kft.push(e); saveAppData();
+    addRow('kftRows',[fmtDate(d),flagCell(e.egfr,60,999,''),flagCell(e.urea,1.7,8.3,'mmol/L'),flagCell(e.creat,44,132,'µmol/L'),e.uacr||'—']);
+    addRow('kftElecRows',[fmtDate(d),flagCell(e.k,3.5,5.5,''),flagCell(e.na,136,145,''),flagCell(e.cl,96,106,''),flagCell(e.ca,2.15,2.57,''),'—','—','—','—','—','—']);
+    clearFields(['kft-date','kft-egfr','kft-urea','kft-creat','kft-uacr','kft-k','kft-na','kft-cl','kft-ca']);
+    updateAssessment(); alert('KFT reading saved ✓');
+}
+
+// ── Metabolic entry ──
+function saveMetEntry() {
+    const d=v('met-date'); if(!d){alert('Please enter a date');return;}
+    const e={date:fmtDate(d),nonhdl:v('met-nonhdl'),hdl:v('met-hdl'),ldl:v('met-ldl'),total:v('met-total'),tri:v('met-tri'),glucose:v('met-glucose'),hba1c:v('met-hba1c')};
+    APP.met.push(e); saveAppData();
+    addRow('metCholRows',[fmtDate(d),e.nonhdl||'—',e.hdl||'—',e.ldl||'—',e.total||'—',e.tri||'—']);
+    if(e.glucose||e.hba1c) addRow('metGlucRows',[fmtDate(d),flagCell(e.glucose,70,110,'mg/dL'),flagCell(e.hba1c,4.8,5.9,'%')]);
+    clearFields(['met-date','met-nonhdl','met-hdl','met-ldl','met-total','met-tri','met-glucose','met-hba1c']);
+    updateAssessment(); alert('Metabolic reading saved ✓');
+}
+
+// ── Blood panel entry ──
+function saveBloodEntry() {
+    const d=v('blood-date'); if(!d){alert('Please enter a date');return;}
+    const e={date:fmtDate(d),wbc:v('blood-wbc'),neu:v('blood-neu'),lym:v('blood-lym'),rbc:v('blood-rbc'),hgb:v('blood-hgb'),hct:v('blood-hct'),mcv:v('blood-mcv'),plt:v('blood-plt'),mpv:v('blood-mpv')};
+    APP.blood.push(e); saveAppData();
+    addRow('bloodWBCRows',[fmtDate(d),flagCell(e.wbc,3.6,10.2,''),flagCell(e.neu,1.7,7.6,''),'—',flagCell(e.lym,1.0,3.2,''),'—','—','—','—','—','—','—']);
+    addRow('bloodRBCRows',[fmtDate(d),flagCell(e.rbc,4.06,5.63,''),flagCell(e.hgb,12,16.2,'g/dL'),flagCell(e.hct,36,48.6,'%'),flagCell(e.mcv,73,96.2,'fL'),'—','—','—','—']);
+    addRow('bloodPLTRows',[fmtDate(d),flagCell(e.plt,100,500,''),flagCell(e.mpv,6,11.4,'fL')]);
+    clearFields(['blood-date','blood-wbc','blood-neu','blood-lym','blood-rbc','blood-hgb','blood-hct','blood-mcv','blood-plt','blood-mpv']);
+    updateAssessment(); alert('Blood panel saved ✓');
+}
+
+// ── Scans ──
+let scans=[];
+try{scans=JSON.parse(localStorage.getItem('scans')||'[]');}catch(e){scans=[];}
+function handleScanFiles(files){
+    Array.from(files).forEach(f=>{
+        const reader=new FileReader();
+        reader.onload=ev=>{
+            scans.push({name:f.name,data:ev.target.result,type:f.type,label:''});
+            try{localStorage.setItem('scans',JSON.stringify(scans));}catch(err){alert('Storage full — use 💾 Save HTML to embed scans.');}
+            renderScans();
+        };
+        reader.readAsDataURL(f);
+    });
+}
+function handleScanDrop(e){e.preventDefault();document.getElementById('scanDrop').classList.remove('dragover');handleScanFiles(e.dataTransfer.files);}
+function deleteScan(i){if(!confirm('Remove this scan?'))return;scans.splice(i,1);try{localStorage.setItem('scans',JSON.stringify(scans));}catch(e){}renderScans();}
+function updateScanLabel(i,val){scans[i].label=val;try{localStorage.setItem('scans',JSON.stringify(scans));}catch(e){}}
+function renderScans(){
+    const grid=document.getElementById('scanGrid'); if(!grid)return;
+    if(!scans.length){grid.innerHTML='<p style="color:#64748b;font-size:0.8rem;text-align:center;padding:20px 0;">No scans yet — drag &amp; drop or click to upload.</p>';return;}
+    grid.innerHTML=scans.map((s,i)=>{
+        const prev=s.type&&s.type.startsWith('image/')?'<img src="'+s.data+'" alt="scan">':'<div style="font-size:2.5rem;padding:14px 0;text-align:center;">📄</div>';
+        return'<div class="scan-thumb"><button class="scan-del" onclick="deleteScan('+i+')">✕</button>'+prev+'<div style="font-size:0.68rem;word-break:break-word;margin-top:4px;color:#94a3b8;">'+s.name+'</div><input class="scan-label-input" placeholder="Label" value="'+(s.label||'')+'" onchange="updateScanLabel('+i+',this.value)"></div>';
+    }).join('');
+}
+
+// ── Save HTML ──
+function saveAsHTML(){
+    const blob=new Blob([document.documentElement.outerHTML],{type:'text/html'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='HealthHub_'+new Date().toISOString().slice(0,10)+'.html'; a.click();
+}
+
+// ── AI Assessment ──
+async function runAIAssessment(){
+    const btn=document.getElementById('aiRunBtn'),resp=document.getElementById('aiResponse'),ctx=document.getElementById('aiContext');
+    btn.disabled=true; btn.textContent='⏳ Analysing...';
+    resp.innerHTML='<div class="ai-thinking">🔄 Generating personalised assessment...</div>';
+    const name=document.getElementById('piName').value||'Patient';
+    const age=document.getElementById('piAge').textContent||'—';
+    const h=document.getElementById('piHeight').value||'—';
+    const bmi=document.getElementById('piBMI').textContent||'—';
+    const bpLog=getLog('bpLog'),wtLog=getLog('weightLog');
+    const latestBP=bpLog.length?bpLog[bpLog.length-1].val:'—';
+    const latestWt=wtLog.length?wtLog[wtLog.length-1].val+' kg':'—';
+    if(ctx) ctx.textContent='For: '+name+' · '+age+' · '+latestWt+' · BP '+latestBP;
+    const lft=APP.lft.length?APP.lft[APP.lft.length-1]:null;
+    const kft=APP.kft.length?APP.kft[APP.kft.length-1]:null;
+    const met=APP.met.length?APP.met[APP.met.length-1]:null;
+    const blood=APP.blood.length?APP.blood[APP.blood.length-1]:null;
+    const prompt=`You are a medical data analyst. Give a clear structured plain-language assessment. Be specific.
+
+PATIENT: ${name}, ${age}, Height: ${h}cm, Weight: ${latestWt}, BMI: ${bmi}, Latest BP: ${latestBP} mmHg
+
+ECG HISTORY: Stable sinus rhythm 2023–2026. QRS 126ms Nov 2025 (borderline), normalised Jun 2026. Flattened T-waves Jun 2026. Troponin I 3 pg/mL Dec 2023 (normal).
+ECHO 2024: EF 65–70% excellent. Mild eccentric LVH. Mild mitral regurgitation. Mild wall motion abnormality.
+CAROTID Feb 2025: Completely normal. No plaque. IMT 0.6–0.7mm.
+LATEST LFT: ${lft?JSON.stringify(lft):'No new entries — historical: AST/ALT normal, CRP 0.031 mg/dL Apr 2026'}
+LATEST KFT: ${kft?JSON.stringify(kft):'No new entries — historical: eGFR >76, creatinine/urea normal'}
+LATEST METABOLIC: ${met?JSON.stringify(met):'No new entries — historical: LDL improving, HbA1c 5.2%, glucose normalised'}
+LATEST BLOOD PANEL: ${blood?JSON.stringify(blood):'No new entries — historical: WBC infection Sep 2024 resolved, all normal Apr 2026'}
+
+Provide:
+1. OVERALL SUMMARY (2–3 sentences)
+2. TOP STRENGTHS (bullets)
+3. AREAS OF CONCERN (bullets with brief explanation)
+4. RECOMMENDED ACTIONS (prioritised bullets)
+5. WATCH AT NEXT TESTS`;
+    try{
+        const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+        const data=await res.json();
+        resp.textContent=data.content&&data.content[0]?data.content[0].text:'No response.';
+    }catch(err){resp.innerHTML='<span style="color:#f87171;">Connection error. Try again.</span>';}
+    btn.disabled=false; btn.textContent='✨ Refresh Assessment';
+}
+
+// ── Tooltip glossary (definitions only — no personal data) ──
+const GLOSSARY = {
+    heartrate:    {name:'Heart Rate (bpm)',normal:'Normal: 60–100 bpm',def:'The number of times the heart beats per minute. Bradycardia is a rate below 60 bpm; tachycardia is above 100 bpm. Resting heart rate reflects cardiovascular fitness and autonomic nervous system balance.'},
+    rhythm:       {name:'Heart Rhythm',normal:'Normal: Sinus rhythm',def:'The pattern and origin of the heart\'s electrical impulses. Sinus rhythm means the sinoatrial node is correctly pacing the heart. Abnormal rhythms (arrhythmias) include atrial fibrillation, ventricular tachycardia, and heart block.'},
+    pr:           {name:'PR Interval',normal:'Normal: 120–200 ms',def:'Time for the electrical signal to travel from the atria to the ventricles via the AV node. A prolonged PR interval (>200 ms) indicates first-degree AV block — a conduction delay. Short PR may suggest pre-excitation (e.g. Wolff-Parkinson-White syndrome).'},
+    qrs:          {name:'QRS Complex',normal:'Normal: <120 ms',def:'Represents depolarisation (electrical activation) of the ventricles. A wide QRS (>120 ms) may indicate bundle branch block, ventricular pacing, or hyperkalaemia. A borderline reading of 120–130 ms may be a non-specific intraventricular conduction delay.'},
+    qtc:          {name:'QTc (Corrected QT Interval)',normal:'Normal: <440 ms (men), <460 ms (women)',def:'The time for ventricular repolarisation, corrected for heart rate. A prolonged QTc increases risk of a dangerous arrhythmia called Torsades de Pointes, which can cause sudden cardiac death. Many medications can prolong QTc.'},
+    troponin:     {name:'Troponin I / T',normal:'Normal: <26 pg/mL (high-sensitivity, male)',def:'Proteins released into the bloodstream when cardiac muscle cells are damaged or dying. The primary biomarker for acute myocardial infarction (heart attack). Also elevated in myocarditis, pulmonary embolism, renal failure, and sepsis. Rising and falling pattern is characteristic of acute MI.'},
+    ckmb:         {name:'CK-MB (Creatine Kinase — MB Isoenzyme)',normal:'Normal: <30 U/L (or <5% of total CK)',def:'CK-MB is an enzyme found predominantly in heart muscle cells. It is released into the blood when heart muscle is damaged. Historically the primary cardiac marker before troponin, it is still used alongside troponin to confirm heart attack and to detect a second MI (re-infarction) because its levels fall faster than troponin. Also elevated in myocarditis, cardiac surgery, and electrical cardioversion. CK-MB is normally undetectable or very low in healthy blood. High CK-MB with elevated total CK and chest pain strongly suggests recent heart muscle injury. Causes of mildly elevated CK-MB without heart attack include: intense physical exercise, skeletal muscle injury, rhabdomyolysis, hypothyroidism, and renal failure.'},
+    ef:           {name:'EF (Ejection Fraction)',normal:'Normal: 55–70%',def:'The percentage of blood pumped out of the left ventricle with each heartbeat. Preserved EF (≥55%) indicates normal systolic function. Mildly reduced: 41–54%. Reduced: ≤40% (heart failure with reduced EF, HFrEF). Used to classify heart failure and guide treatment.'},
+    lvh:          {name:'LVH (Left Ventricular Hypertrophy)',normal:'Normal: No LVH',def:'Thickening of the muscular wall of the left ventricle, usually caused by chronic pressure overload from hypertension or aortic stenosis. Eccentric LVH (enlarged cavity with proportional wall thickening) differs from concentric LVH (thick wall, normal cavity). Increases risk of arrhythmia, heart failure, and sudden death if unmanaged.'},
+    mr:           {name:'Mitral Regurgitation (MR)',normal:'Normal: None or trace',def:'Backflow of blood through the mitral valve from the left ventricle into the left atrium during systole. Causes include mitral valve prolapse, rheumatic disease, and annular dilation. Mild MR is common and usually benign. Severe MR causes volume overload and may require surgical repair or replacement.'},
+    wallmotion:   {name:'Wall Motion',normal:'Normal: Uniform contraction of all segments',def:'How well each segment of the heart muscle contracts during systole. Hypokinesia (reduced motion), akinesia (absent motion), and dyskinesia (paradoxical motion) indicate ischaemia or infarction of that segment. Wall motion abnormalities are assessed in echocardiography and stress testing.'},
+    imt:          {name:'IMT (Intima-Media Thickness)',normal:'Normal: <0.9 mm',def:'Ultrasound measurement of the combined thickness of the inner two layers (intima and media) of the carotid artery wall. IMT >0.9 mm indicates subclinical atherosclerosis. Used as a surrogate marker of cardiovascular risk. Increased by hypertension, dyslipidaemia, smoking, and diabetes.'},
+    psv:          {name:'PSV (Peak Systolic Velocity)',normal:'Normal: <125 cm/s (carotid)',def:'The maximum speed of blood flow during cardiac systole, measured by Doppler ultrasound. Elevated PSV in the carotid arteries indicates arterial narrowing (stenosis). Used to classify stenosis severity: moderate (125–230 cm/s), severe (>230 cm/s).'},
+    plaque:       {name:'Carotid Plaque / Stenosis',normal:'Normal: No plaque',def:'Atherosclerotic plaque is a buildup of cholesterol, calcium, and inflammatory cells within the arterial wall. In the carotid arteries it increases the risk of stroke (by embolism or thrombosis). Stenosis refers to the degree of luminal narrowing caused by plaque. Detected by duplex ultrasound.'},
+    ast:          {name:'AST (Aspartate Aminotransferase)',normal:'Normal: <42 U/L',def:'An enzyme found in liver cells, heart muscle, skeletal muscle, and red blood cells. Elevated in liver disease, myocardial infarction, muscle injury, and haemolysis. Less liver-specific than ALT. Elevated AST with normal ALT may suggest non-hepatic cause. AST:ALT ratio >2:1 is suggestive of alcoholic liver disease.'},
+    alt:          {name:'ALT (Alanine Aminotransferase)',normal:'Normal: <42 U/L (male)',def:'The most liver-specific transaminase enzyme. Elevated almost exclusively by hepatocyte injury. Causes of elevated ALT include viral hepatitis, fatty liver disease (NAFLD/NASH), alcohol excess, drug-induced liver injury, and autoimmune hepatitis. Mild elevation (<3× normal) is common and often related to lifestyle.'},
+    ggt:          {name:'GGT (Gamma-Glutamyl Transferase)',normal:'Normal: 5–40 U/L',def:'A liver enzyme found in hepatocytes and bile duct cells. Very sensitive to alcohol use — often the first liver marker to rise with regular drinking. Also elevated in bile duct obstruction, fatty liver, and with many medications. Isolated GGT elevation without other liver test abnormalities is common with alcohol intake.'},
+    bilirubin:    {name:'Bilirubin (Total)',normal:'Normal: 3–20 µmol/L (0.1–1.2 mg/dL)',def:'A yellow pigment produced from the breakdown of haem (from haemoglobin). Elevated total bilirubin causes jaundice. Pre-hepatic causes: haemolysis. Hepatic causes: hepatitis, cirrhosis, Gilbert\'s syndrome. Post-hepatic (conjugated): bile duct obstruction, gallstones. Gilbert\'s syndrome (mild unconjugated hyperbilirubinaemia) is benign and common.'},
+    crp:          {name:'CRP (C-Reactive Protein)',normal:'Normal: <5 mg/L (standard); <3 mg/L (high-sensitivity, cardiac risk)',def:'An acute-phase protein produced by the liver in response to inflammation, infection, or tissue injury. A sensitive but non-specific marker. Dramatically elevated in bacterial infections, autoimmune flares, and post-surgical states. High-sensitivity CRP (hsCRP) at 1–3 mg/L predicts increased cardiovascular risk even without obvious inflammation.'},
+    egfr:         {name:'eGFR (Estimated Glomerular Filtration Rate)',normal:'Normal: >60 mL/min/1.73m² (G1: >90 optimal)',def:'Estimates kidney filtration capacity based on serum creatinine, age, sex, and race. CKD stages by eGFR: G1 (≥90, normal/high), G2 (60–89, mildly reduced), G3a (45–59), G3b (30–44), G4 (15–29, severely reduced), G5 (<15, kidney failure). Two readings below 60 three months apart confirm chronic kidney disease.'},
+    urea:         {name:'Urea / BUN (Blood Urea Nitrogen)',normal:'Normal: 1.7–8.3 mmol/L (7–20 mg/dL)',def:'End product of protein catabolism, excreted by the kidneys. Elevated urea (uraemia) indicates kidney dysfunction, dehydration, high-protein diet, or gastrointestinal bleeding. Low urea may suggest liver failure, malnutrition, or overhydration. BUN:creatinine ratio helps distinguish pre-renal from intrinsic renal causes.'},
+    creatinine:   {name:'Creatinine',normal:'Normal: 62–106 µmol/L (male) = 0.7–1.2 mg/dL · Female: 44–97 µmol/L = 0.5–1.1 mg/dL · Conversion: µmol/L ÷ 88.4 = mg/dL',def:'A waste product of creatine phosphate metabolism in muscle cells, filtered freely by the kidneys and not reabsorbed. The most widely used single marker of kidney function. Serum creatinine remains normal until approximately 50% of kidney function is lost — it is a late marker. Elevated creatinine indicates reduced glomerular filtration. Mildly elevated in dehydration, high meat intake, or intense exercise. Affected by muscle mass — athletes and muscular individuals naturally have higher baseline creatinine. Always interpreted alongside eGFR for a complete kidney picture.'},
+    uacr:         {name:'uACR (Urine Albumin-to-Creatinine Ratio)',normal:'Normal: <3 mg/mmol or <30 mg/g',def:'Sensitive screening test for early kidney damage. Detects microalbuminuria — small amounts of albumin leaking through damaged glomeruli. Microalbuminuria (3–30 mg/mmol) is an early marker of diabetic nephropathy and cardiovascular risk. Macroalbuminuria (>30 mg/mmol) indicates established kidney damage. Correcting for creatinine accounts for urine dilution.'},
+    kplus:        {name:'K⁺ (Potassium)',normal:'Normal: 3.5–5.5 mmol/L',def:'The primary intracellular cation, critical for membrane potential in cardiac and skeletal muscle. Hypokalaemia (<3.5) causes muscle weakness, cramps, constipation, and dangerous cardiac arrhythmias (U waves on ECG, ventricular fibrillation). Hyperkalaemia (>5.5) causes bradycardia, peaked T waves, and potentially fatal cardiac arrest. Commonly affected by diuretics, ACE inhibitors, and kidney disease.'},
+    naplus:       {name:'Na⁺ (Sodium)',normal:'Normal: 136–145 mmol/L',def:'The primary extracellular cation, governing osmolality and fluid distribution. Hyponatraemia (<135) is the most common electrolyte disorder — causes range from SIADH to heart failure, cirrhosis, hypothyroidism, and excess water intake. Hypernatraemia (>145) indicates dehydration or excessive sodium intake. Rapid correction of either can be dangerous (cerebral oedema or osmotic demyelination).'},
+    chloride:     {name:'Cl⁻ (Chloride)',normal:'Normal: 96–106 mmol/L',def:'The main extracellular anion, important for acid-base balance and osmotic pressure. Hyperchloraemia (>106) occurs with metabolic acidosis, dehydration, renal tubular acidosis, or excess saline infusion. Hypochloraemia (<96) accompanies metabolic alkalosis, vomiting, or loop diuretic use. Usually interpreted alongside sodium and bicarbonate.'},
+    calcium:      {name:'Calcium (Total Serum)',normal:'Normal: 2.15–2.57 mmol/L (8.5–10.3 mg/dL)',def:'Essential for bone mineralisation, neuromuscular function, coagulation, and cardiac contractility. Hypercalcaemia causes constipation, polyuria, confusion, renal stones ("bones, stones, groans, and psychic moans") — commonly from hyperparathyroidism or malignancy. Hypocalcaemia causes tetany, perioral tingling, Trousseau\'s sign, and QTc prolongation. Always correct for albumin level.'},
+    ketones:      {name:'Ketones (Urine)',normal:'Normal: Negative',def:'Produced when the body metabolises fat instead of glucose — occurs in fasting, low-carbohydrate diets, prolonged exercise, and uncontrolled diabetes. In diabetic ketoacidosis (DKA), very high ketone production causes life-threatening acidosis. Trace ketones after fasting are clinically insignificant; moderate to large ketones require investigation.'},
+    sg:           {name:'S.G. (Urine Specific Gravity)',normal:'Normal: 1.005–1.030',def:'Measures urine concentration — the ratio of urine density to water density. Reflects the kidney\'s ability to concentrate or dilute urine. Low SG (<1.005) suggests overhydration or diabetes insipidus. High SG (>1.030) indicates concentrated urine from dehydration, SIADH, or renal disease. Fixed SG of 1.010 (isosthenuria) suggests loss of concentrating ability in chronic kidney disease.'},
+    ph:           {name:'pH (Urine)',normal:'Normal: 4.5–8.0 (typically 5.5–6.5)',def:'Urine acidity or alkalinity. Normally slightly acidic. Acidic urine (low pH) is associated with high-protein diets, uric acid stones, and metabolic acidosis. Alkaline urine (high pH) may indicate UTI (urease-producing bacteria), renal tubular acidosis, or vegetarian diet. Persistently alkaline urine can promote calcium phosphate stone formation.'},
+    protein:      {name:'Urine Protein',normal:'Normal: Negative / <0.1 g/L',def:'Protein should not normally appear in urine — healthy glomeruli prevent albumin filtration. Proteinuria indicates glomerular damage (from diabetes, hypertension, glomerulonephritis) or tubular dysfunction. Transient proteinuria can occur with fever, exercise, or orthostatic (postural) changes in young people. Persistent proteinuria requires further evaluation with uACR and renal function tests.'},
+    nitrate:      {name:'Urine Nitrate',normal:'Normal: Negative',def:'Urinary nitrates are converted to nitrites by gram-negative bacteria (e.g. E. coli, Klebsiella). A positive nitrite dipstick result strongly suggests bacterial urinary tract infection. False negatives occur with gram-positive infections (Staphylococcus, Enterococcus) or very dilute urine. Always interpreted alongside leukocyte esterase and clinical symptoms.'},
+    lue:          {name:'Lue / Leukocyte Esterase (WBC in Urine)',normal:'Normal: Negative',def:'An enzyme released by neutrophils (white blood cells) in urine. A positive result indicates pyuria — white blood cells in urine — suggesting urinary tract infection, kidney infection (pyelonephritis), interstitial nephritis, or renal calculi. Can be positive without infection in contaminated samples or with inflammation.'},
+    nonhdl:       {name:'non-HDL Cholesterol',normal:'Normal: <130 mg/dL / <3.4 mmol/L',def:'Calculated as Total Cholesterol minus HDL. Represents all atherogenic lipoprotein particles including LDL, VLDL, IDL, Lp(a), and chylomicron remnants. Considered a superior cardiovascular risk predictor to LDL alone because it captures the full burden of cholesterol-carrying particles that can deposit in arterial walls.'},
+    hdl:          {name:'HDL (High-Density Lipoprotein)',normal:'Normal: >1.0 mmol/L / >40 mg/dL (men)',def:'"Good cholesterol" — transports cholesterol from peripheral tissues back to the liver for excretion (reverse cholesterol transport). Low HDL is an independent risk factor for cardiovascular disease. Raised by regular aerobic exercise, moderate alcohol (though this benefit is debated), smoking cessation, and niacin therapy. Statins raise HDL modestly.'},
+    ldl:          {name:'LDL (Low-Density Lipoprotein)',normal:'Normal: <3.0 mmol/L / <130 mg/dL (higher risk <2.0 mmol/L)',def:'The main carrier of cholesterol to peripheral tissues. The primary atherogenic lipoprotein — oxidised LDL particles penetrate the arterial intima and initiate plaque formation. LDL reduction is the primary target of lipid-lowering therapy (statins, ezetimibe, PCSK9 inhibitors). Target depends on overall cardiovascular risk category.'},
+    totalchol:    {name:'Total Cholesterol',normal:'Normal: <5.0 mmol/L / <200 mg/dL (desirable)',def:'The sum of all cholesterol fractions: HDL + LDL + VLDL. Useful as an initial screening tool but insufficient alone for risk assessment. The Total:HDL cholesterol ratio is a better predictor of cardiovascular risk than total cholesterol alone. Requires full fasting lipid profile for accurate interpretation.'},
+    triglycerides:{name:'Triglycerides (TG)',normal:'Normal: <1.7 mmol/L / <150 mg/dL',def:'The most common form of dietary and stored fat. Elevated triglycerides (hypertriglyceridaemia) are associated with cardiovascular risk, especially combined with low HDL and elevated LDL (metabolic syndrome). Causes include obesity, diabetes, alcohol excess, hypothyroidism, kidney disease, and genetic disorders. Very high TG (>11 mmol/L) causes acute pancreatitis.'},
+    glucose:      {name:'Glucose (Blood Sugar)',normal:'Normal: 3.9–6.1 mmol/L / 70–110 mg/dL (fasting)',def:'The body\'s primary energy substrate, regulated by insulin and glucagon. Impaired fasting glucose (IFG): 6.1–6.9 mmol/L. Diabetes: ≥7.0 mmol/L on two occasions, or ≥11.1 mmol/L with symptoms, or HbA1c ≥48 mmol/mol (6.5%). Hypoglycaemia (<3.9 mmol/L) causes sweating, tremor, confusion, and seizures. Post-prandial glucose peaks at 7.8 mmol/L in healthy individuals.'},
+    hba1c:        {name:'HbA1c (Glycated Haemoglobin)',normal:'Normal: <42 mmol/mol / <6.0% (non-diabetic)',def:'Measures the percentage of haemoglobin with glucose permanently attached — reflects average blood glucose over the preceding 2–3 months (the lifespan of red blood cells). Not affected by short-term dietary changes. Pre-diabetes: 42–47 mmol/mol (6.0–6.4%). Diabetes: ≥48 mmol/mol (6.5%). Target for treated diabetics: generally <53 mmol/mol (<7%).'},
+    wbc:          {name:'WBC (White Blood Cell Count / Leucocytes)',normal:'Normal: 4.0–11.0 ×10⁹/L',def:'Total count of all immune cells in the blood. Leucocytosis (high WBC) suggests infection, inflammation, leukaemia, or stress response. Leucopenia (low WBC) occurs with viral infections, bone marrow suppression (chemotherapy, aplastic anaemia), or overwhelming sepsis. The differential count (neutrophils, lymphocytes, etc.) identifies the type of immune response.'},
+    neu:          {name:'NEU (Neutrophils / Polymorphonuclear Cells)',normal:'Normal: 1.8–7.5 ×10⁹/L (40–75%)',def:'The most abundant white blood cells — primary defence against bacterial and fungal infections. Produced in bone marrow and released rapidly during infection. Neutrophilia (elevated) occurs with bacterial infections, inflammation, steroids, and stress. Neutropenia (<1.5 ×10⁹/L) increases susceptibility to severe bacterial infections.'},
+    pctne:        {name:'%NE (Neutrophil Percentage)',normal:'Normal: 40–75%',def:'The proportion of total white blood cells that are neutrophils. A high percentage (>75%) with elevated absolute neutrophil count strongly suggests bacterial infection or inflammatory response. Shift to immature forms (band cells, metamyelocytes) — called a "left shift" — indicates severe infection or bone marrow stress.'},
+    lym:          {name:'LYM (Lymphocytes)',normal:'Normal: 1.0–4.0 ×10⁹/L (20–45%)',def:'Immune cells comprising T cells (cell-mediated immunity), B cells (antibody production), and NK cells (natural killer cells). Lymphocytosis occurs with viral infections (EBV, CMV, hepatitis), lymphomas, and chronic lymphocytic leukaemia. Lymphopenia occurs with HIV, severe bacterial infections, immunosuppression, and autoimmune conditions.'},
+    mono:         {name:'MONO (Monocytes)',normal:'Normal: 0.2–1.0 ×10⁹/L (2–10%)',def:'Large mononuclear phagocytes that differentiate into macrophages and dendritic cells in tissues. Monocytosis occurs with chronic infections (TB, subacute endocarditis), inflammatory bowel disease, and myelomonocytic leukaemia. Part of the innate immune system — phagocytose pathogens, debris, and present antigens to lymphocytes.'},
+    eos:          {name:'EOS (Eosinophils)',normal:'Normal: 0.04–0.5 ×10⁹/L (1–6%)',def:'Granulocytes involved in allergic reactions and defence against parasitic infections. Eosinophilia (elevated) is caused by allergic conditions (asthma, atopic dermatitis, drug reactions), parasites, Addison\'s disease, and eosinophilic disorders. Hypereosinophilic syndrome (>1.5 ×10⁹/L) can cause organ damage (cardiac, neurological).'},
+    baso:         {name:'BASO (Basophils)',normal:'Normal: 0–0.1 ×10⁹/L (0–1%)',def:'The rarest white blood cells, containing granules rich in histamine and heparin. Basophils mediate IgE-dependent allergic and inflammatory reactions. Basophilia is uncommon; when present may indicate chronic myeloid leukaemia (CML — a classic finding), polycythaemia vera, hypothyroidism, or allergic disease. Near-zero counts (as seen here) are normal.'},
+    rbc:          {name:'RBC (Red Blood Cell Count / Erythrocytes)',normal:'Normal: 4.5–5.5 ×10¹²/L (male)',def:'Total number of red blood cells — the oxygen-carrying cells produced in bone marrow. Low RBC (with low HGB and HCT) = anaemia. High RBC = polycythaemia (can be primary — polycythaemia vera — or secondary to hypoxia or dehydration). Must be interpreted alongside haemoglobin, haematocrit, and red cell indices (MCV, MCH, MCHC).'},
+    hgb:          {name:'HGB (Haemoglobin)',normal:'Normal: 130–170 g/L (13–17 g/dL) male',def:'The iron-containing protein in red blood cells that transports oxygen from the lungs to tissues and returns carbon dioxide. Low haemoglobin = anaemia, classified by MCV as microcytic (iron deficiency), normocytic (chronic disease, haemolysis), or macrocytic (B12/folate deficiency). Elevated in polycythaemia, dehydration, and at high altitude.'},
+    hct:          {name:'HCT (Haematocrit / Packed Cell Volume)',normal:'Normal: 40–52% (male)',def:'The fraction of blood volume occupied by red blood cells, expressed as a percentage. Closely correlated with haemoglobin (HCT ≈ 3 × HGB). Low HCT = anaemia; high HCT = polycythaemia or dehydration. Used to calculate red cell indices and to guide blood transfusion decisions.'},
+    mcv:          {name:'MCV (Mean Corpuscular Volume)',normal:'Normal: 80–100 fL',def:'The average volume of a red blood cell. Used to classify anaemia: Microcytic (<80 fL): iron deficiency, thalassaemia, lead poisoning. Normocytic (80–100 fL): acute blood loss, haemolysis, chronic disease. Macrocytic (>100 fL): B12/folate deficiency, liver disease, alcohol, hypothyroidism, myelodysplasia. Reticulocytes are larger and raise MCV when produced in excess.'},
+    mch:          {name:'MCH (Mean Corpuscular Haemoglobin)',normal:'Normal: 27–33 pg',def:'The average mass of haemoglobin per red blood cell. Parallels MCV: low in microcytic/hypochromic anaemia (iron deficiency), high in macrocytic anaemia (B12/folate deficiency). Calculated as (HGB ÷ RBC) × 10. Interpreted alongside MCV and MCHC for full characterisation of anaemia type.'},
+    mchc:         {name:'MCHC (Mean Corpuscular Haemoglobin Concentration)',normal:'Normal: 310–360 g/L (31–36 g/dL)',def:'The concentration of haemoglobin within red blood cells — how densely packed each cell is. Low MCHC (hypochromia) = iron deficiency anaemia. High MCHC (>36 g/dL) = hereditary spherocytosis or sickle cell disease. Burns anaemia can also elevate MCHC. The most tightly regulated red cell index — very resistant to artefact.'},
+    rdw:          {name:'RDW (Red Cell Distribution Width)',normal:'Normal: 11.5–14.5%',def:'A measure of variation in red blood cell size (anisocytosis). High RDW (>14.5%) means cells vary greatly in size — occurs early in iron, B12, or folate deficiency before anaemia develops, in mixed deficiency anaemias, haemolysis, and after blood transfusion. Normal RDW with low MCV suggests thalassaemia trait (uniform small cells) rather than iron deficiency.'},
+    nrbc:         {name:'NRBC (Nucleated Red Blood Cells)',normal:'Normal: 0 per 100 WBC',def:'Immature erythrocytes still containing a nucleus — normally confined to bone marrow. Their presence in peripheral blood (erythroblastosis) suggests severe anaemia with erythropoietic stress, bone marrow infiltration (leukaemia, myelofibrosis, metastatic cancer), hypoxia, sepsis, or hyposplenism. Even one NRBC per 100 WBC is abnormal and triggers differential count correction.'},
+    plt:          {name:'PLT (Platelets / Thrombocytes)',normal:'Normal: 150–400 ×10⁹/L',def:'Small anucleate cell fragments essential for primary haemostasis (clot formation). Thrombocytopenia (<150 ×10⁹/L): causes include ITP, aplastic anaemia, bone marrow failure, hypersplenism, viral infections, heparin-induced thrombocytopenia (HIT). Spontaneous bleeding risk rises when PLT <20 ×10⁹/L. Thrombocytosis (>400 ×10⁹/L): reactive (infection, inflammation) or primary (essential thrombocythaemia).'},
+    mpv:          {name:'MPV (Mean Platelet Volume)',normal:'Normal: 7.5–12.5 fL',def:'The average size of platelets. Larger platelets are more metabolically active and contain more granules. Elevated MPV can precede thrombocytopenia in ITP (large platelets indicate increased production). High MPV is associated with increased platelet reactivity and may be an independent risk factor for MI and stroke. Low MPV with thrombocytopenia suggests bone marrow failure. Varies with platelet count — always interpret together.'},
+};
+
+function initTooltips(){
+    const box=document.getElementById('ttBox'); if(!box) return;
+    document.addEventListener('mouseover',function(e){
+        const el=e.target.closest('.tt'); if(!el){box.classList.remove('visible');return;}
+        const g=GLOSSARY[el.dataset.tt]; if(!g){box.classList.remove('visible');return;}
+        box.innerHTML='<strong>'+g.name+'</strong>'+g.def+'<span class="tt-normal">⚕ '+g.normal+'</span>';
+        box.classList.add('visible'); moveTooltip(e);
+    });
+    document.addEventListener('mousemove',function(e){if(box.classList.contains('visible'))moveTooltip(e);});
+    document.addEventListener('mouseleave',function(){box.classList.remove('visible');});
+}
+function moveTooltip(e){
+    const box=document.getElementById('ttBox');
+    const x=Math.min(e.clientX+16,window.innerWidth-box.offsetWidth-10);
+    const y=Math.min(e.clientY+16,window.innerHeight-box.offsetHeight-10);
+    box.style.left=x+'px'; box.style.top=y+'px';
+}
+
+// ── Init ──
+window.addEventListener('DOMContentLoaded',function(){
+    loadAppData();
+
+    // Pre-seed historical data if APP store is empty (first load)
+    if (!APP.lft.length) {
+        APP.lft = [
+            {date:'17 Dec 2023', ast:'36', alt:'25', ggt:'16', bili:'', crp:''},
+            {date:'13 Jun 2024', ast:'24.7', alt:'25.8', ggt:'', bili:'Negative', crp:'7.31'},
+            {date:'20 Feb 2025', ast:'30', alt:'37.2', ggt:'', bili:'', crp:''},
+            {date:'28 Jun 2025', ast:'37', alt:'25', ggt:'', bili:'', crp:''},
+            {date:'24 Apr 2026', ast:'38', alt:'32', ggt:'', bili:'', crp:'0.031'},
+        ];
+    }
+    if (!APP.kft.length) {
+        APP.kft = [
+            {date:'17 Dec 2023', egfr:'', urea:'5.2', creat:'84', uacr:'', k:'4.02', na:'139.9', cl:'108', ca:'2.35'},
+            {date:'23 Apr 2024', egfr:'83.8', urea:'', creat:'88', uacr:'3.07', k:'', na:'', cl:'', ca:''},
+            {date:'13 Jun 2024', egfr:'76.31', urea:'6.2', creat:'95.8', uacr:'', k:'3.7', na:'134.3', cl:'100.6', ca:'2.26'},
+            {date:'20 Feb 2025', egfr:'83.73', urea:'', creat:'89', uacr:'', k:'', na:'', cl:'', ca:''},
+            {date:'28 Jun 2025', egfr:'', urea:'4.9', creat:'91', uacr:'', k:'4.86', na:'136.6', cl:'108', ca:'2.42'},
+            {date:'24 Apr 2026', egfr:'', urea:'7.3', creat:'93', uacr:'', k:'', na:'', cl:'', ca:''},
+        ];
+    }
+    if (!APP.met.length) {
+        APP.met = [
+            {date:'17 Dec 2023', nonhdl:'', hdl:'', ldl:'122', total:'216', tri:'71', glucose:'100', hba1c:''},
+            {date:'23 Apr 2024', nonhdl:'137.8', hdl:'52.5', ldl:'134.8', total:'190.3', tri:'77.2', glucose:'96.9', hba1c:''},
+            {date:'13 Jun 2024', nonhdl:'', hdl:'', ldl:'', total:'', tri:'', glucose:'124', hba1c:''},
+            {date:'03 Sep 2024', nonhdl:'', hdl:'', ldl:'', total:'', tri:'', glucose:'129', hba1c:''},
+            {date:'28 Sep 2024', nonhdl:'', hdl:'', ldl:'', total:'', tri:'', glucose:'101', hba1c:''},
+            {date:'20 Feb 2025', nonhdl:'144', hdl:'52', ldl:'128', total:'196', tri:'65', glucose:'100', hba1c:''},
+            {date:'24 Feb 2025', nonhdl:'', hdl:'', ldl:'', total:'', tri:'', glucose:'', hba1c:'5.2'},
+            {date:'28 Jun 2025', nonhdl:'', hdl:'', ldl:'131', total:'228', tri:'54', glucose:'95', hba1c:''},
+            {date:'24 Apr 2026', nonhdl:'', hdl:'', ldl:'', total:'', tri:'', glucose:'103', hba1c:''},
+        ];
+    }
+    if (!APP.blood.length) {
+        APP.blood = [
+            {date:'17 Dec 2023', wbc:'7.49', neu:'3.65', lym:'2.78', rbc:'4.83', hgb:'15.8', hct:'45.4', mcv:'94',   mch:'32.7', mchc:'34.8', rdw:'',    plt:'218', mpv:'9.4'},
+            {date:'13 Jun 2024', wbc:'11.7', neu:'10.3', lym:'0.32', rbc:'4.55', hgb:'14.9', hct:'42.6', mcv:'93.7', mch:'32.7', mchc:'34.9', rdw:'',    plt:'197', mpv:'7.4'},
+            {date:'24 Feb 2025', wbc:'6.48', neu:'3.87', lym:'1.71', rbc:'4.59', hgb:'14.3', hct:'41.6', mcv:'90.6', mch:'31.2', mchc:'34.4', rdw:'12.7',plt:'191', mpv:'10.2'},
+            {date:'24 Apr 2026', wbc:'8.3',  neu:'5.4',  lym:'1.9',  rbc:'4.84', hgb:'15.5', hct:'46.8', mcv:'96.7', mch:'32.1', mchc:'33.2', rdw:'13.7',plt:'224', mpv:'7.2'},
+        ];
+    }
+    if (!APP.trop.length) {
+        APP.trop = [{date:'17 Dec 2023', val:'3'}];
+    }
+    saveAppData();
+    const name=localStorage.getItem('piName'),dob=localStorage.getItem('piDOB'),ht=localStorage.getItem('piHeight');
+    if(name) document.getElementById('piName').value=name;
+    if(dob)  document.getElementById('piDOB').value=dob;
+    if(ht)   document.getElementById('piHeight').value=ht;
+    document.getElementById('piHeight').addEventListener('change',function(){
+        try{localStorage.setItem('piHeight',this.value);}catch(e){}
+        calcBMI();
+    });
+    const today=new Date().toISOString().slice(0,10);
+    document.querySelectorAll('input.entry-date-input[type="date"]').forEach(function(el){el.value=today;});
+    calcAge(); renderWeightLog(); renderBPLog(); updateBPAssessment(); renderScans(); calcBMI();
+    updateAssessment(); initTooltips();
+
+    // Fix iOS touch on tab buttons — bind touchend as backup
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            var match = btn.getAttribute('onclick');
+            if (match) {
+                var m = match.match(/showTab\('([^']+)',this\)/);
+                if (m) showTab(m[1], btn);
+            }
+        });
+    });
+
+    // Fix iOS touch on toolbar buttons
+    document.querySelectorAll('.toolbar-btn').forEach(function(btn) {
+        btn.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            var fn = btn.getAttribute('onclick');
+            if (fn) { try { eval(fn); } catch(err) {} }
+        });
+    });
+
+    // Fix add/reset log buttons
+    document.querySelectorAll('.add-log-btn, .reset-log-btn, .entry-toggle, .entry-save-btn').forEach(function(btn) {
+        btn.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            var fn = btn.getAttribute('onclick');
+            if (fn) { try { eval(fn); } catch(err) {} }
+        });
+    });
+});
+</script>
+</body>
+</html>
