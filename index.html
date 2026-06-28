@@ -402,14 +402,17 @@
 
         /* ── AI Assessment modal ── */
         .ai-modal-overlay {
-            display: none;
+            display: flex;
             position: fixed; inset: 0;
             background: rgba(0,0,0,0.85);
             z-index: 2000;
             align-items: center;
             justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
         }
-        .ai-modal-overlay.open { display: flex; }
+        .ai-modal-overlay.open { visibility: visible; opacity: 1; pointer-events: auto; }
         .ai-modal {
             background: #0d0d1a;
             border: 1px solid #4f46e5;
@@ -461,14 +464,17 @@
 
         /* ── Scans modal ── */
         .scans-overlay {
-            display: none;
+            display: flex;
             position: fixed; inset: 0;
             background: rgba(0,0,0,0.75);
             z-index: 1000;
             align-items: center;
             justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
         }
-        .scans-overlay.open { display: flex; }
+        .scans-overlay.open { visibility: visible; opacity: 1; pointer-events: auto; }
         .scans-modal {
             background: #1e293b;
             border-radius: 12px;
@@ -761,7 +767,24 @@
         /* Body font smaller on mobile */
         body { font-size: 13px; padding: 0; }
         @media (min-width: 600px) { body { font-size: 14px; padding: 20px; } }
-        </style>
+        
+        /* ── Critical iOS Safari touch fix ── */
+        * { -webkit-tap-highlight-color: rgba(0,0,0,0); }
+        button { 
+            cursor: pointer;
+            -webkit-appearance: none;
+            touch-action: manipulation;
+        }
+        /* Ensure overlays never block when hidden */
+        .scans-overlay:not(.open),
+        .ai-modal-overlay:not(.open) {
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+        /* Remove any transform that can cause iOS stacking context issues */
+        .toolbar-btn:active { opacity: 0.7; transform: none; }
+
+    </style>
 </head>
 <body>
     <div class="container">
@@ -1375,11 +1398,15 @@ function calcAge() {
 
 // ── BMI ──
 function calcBMI() {
-    const log=getLog('weightLog'), lw=log.length?log[log.length-1].val:null;
-    const h=parseFloat(document.getElementById('piHeight').value);
+    const log=getLog('weightLog');
+    const lw = log.length ? parseFloat(log[log.length-1].val) : null;
+    const hRaw = document.getElementById('piHeight').value;
+    const h = parseFloat(hRaw);
     const bmiEl=document.getElementById('piBMI'), assEl=document.getElementById('bmiAssessment');
     const tEl=document.getElementById('bmiTrend'), cEl=document.getElementById('bmiConcern');
-    if (!lw||!h) {
+
+    // Strict guard — must have valid numbers in realistic ranges
+    if (!lw || isNaN(lw) || !h || isNaN(h) || h < 100 || h > 250 || lw < 20 || lw > 300) {
         if(bmiEl) bmiEl.innerHTML='<span style="color:#475569;">Enter height &amp; weight</span>';
         if(assEl) assEl.textContent='—'; if(tEl) tEl.textContent='—';
         if(cEl){cEl.textContent='—';cEl.className='status-monitor';} return;
@@ -1838,9 +1865,23 @@ window.addEventListener('DOMContentLoaded',function(){
     const name=localStorage.getItem('piName'),dob=localStorage.getItem('piDOB'),ht=localStorage.getItem('piHeight');
     if(name) document.getElementById('piName').value=name;
     if(dob)  document.getElementById('piDOB').value=dob;
-    if(ht)   document.getElementById('piHeight').value=ht;
+    if(ht) {
+        var htNum = parseFloat(ht);
+        if (!isNaN(htNum) && htNum >= 100 && htNum <= 250) {
+            document.getElementById('piHeight').value = htNum;
+        } else {
+            try { localStorage.removeItem('piHeight'); } catch(e) {}
+        }
+    }
     document.getElementById('piHeight').addEventListener('change',function(){
-        try{localStorage.setItem('piHeight',this.value);}catch(e){}
+        var val = parseFloat(this.value);
+        if (isNaN(val) || val < 100 || val > 250) {
+            this.value = '';
+            try { localStorage.removeItem('piHeight'); } catch(e) {}
+            calcBMI();
+            return;
+        }
+        try { localStorage.setItem('piHeight', val); } catch(e) {}
         calcBMI();
     });
     const today=new Date().toISOString().slice(0,10);
@@ -1848,34 +1889,62 @@ window.addEventListener('DOMContentLoaded',function(){
     calcAge(); renderWeightLog(); renderBPLog(); updateBPAssessment(); renderScans(); calcBMI();
     updateAssessment(); initTooltips();
 
-    // Fix iOS touch on tab buttons — bind touchend as backup
+    // ── iOS Safari fix: bind all interactive elements via JS ──
+    function bindBtn(selector, handler) {
+        document.querySelectorAll(selector).forEach(function(el) {
+            el.addEventListener('click', handler);
+            el.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                handler.call(el, e);
+            });
+        });
+    }
+
+    // Tab buttons
     document.querySelectorAll('.tab-btn').forEach(function(btn) {
-        btn.addEventListener('touchend', function(e) {
+        function doTab(e) {
             e.preventDefault();
-            var match = btn.getAttribute('onclick');
-            if (match) {
-                var m = match.match(/showTab\('([^']+)',this\)/);
+            var onclick = btn.getAttribute('onclick');
+            if (onclick) {
+                var m = onclick.match(/showTab\(['"]([^'"]+)['"]/);
                 if (m) showTab(m[1], btn);
             }
-        });
+        }
+        btn.addEventListener('click', doTab);
+        btn.addEventListener('touchend', function(e) { e.preventDefault(); doTab(e); });
     });
 
-    // Fix iOS touch on toolbar buttons
+    // Toolbar buttons
     document.querySelectorAll('.toolbar-btn').forEach(function(btn) {
-        btn.addEventListener('touchend', function(e) {
+        function doToolbar(e) {
             e.preventDefault();
             var fn = btn.getAttribute('onclick');
-            if (fn) { try { eval(fn); } catch(err) {} }
-        });
+            if (fn) { try { new Function(fn)(); } catch(err) { console.log(err); } }
+        }
+        btn.addEventListener('click', doToolbar);
+        btn.addEventListener('touchend', function(e) { e.preventDefault(); doToolbar(e); });
     });
 
-    // Fix add/reset log buttons
-    document.querySelectorAll('.add-log-btn, .reset-log-btn, .entry-toggle, .entry-save-btn').forEach(function(btn) {
-        btn.addEventListener('touchend', function(e) {
+    // Log buttons
+    document.querySelectorAll('.add-log-btn, .reset-log-btn').forEach(function(btn) {
+        function doLog(e) {
             e.preventDefault();
             var fn = btn.getAttribute('onclick');
-            if (fn) { try { eval(fn); } catch(err) {} }
-        });
+            if (fn) { try { new Function(fn)(); } catch(err) { console.log(err); } }
+        }
+        btn.addEventListener('click', doLog);
+        btn.addEventListener('touchend', function(e) { e.preventDefault(); doLog(e); });
+    });
+
+    // Entry toggle + save buttons
+    document.querySelectorAll('.entry-toggle, .entry-save-btn').forEach(function(btn) {
+        function doEntry(e) {
+            e.preventDefault();
+            var fn = btn.getAttribute('onclick');
+            if (fn) { try { new Function(fn)(); } catch(err) { console.log(err); } }
+        }
+        btn.addEventListener('click', doEntry);
+        btn.addEventListener('touchend', function(e) { e.preventDefault(); doEntry(e); });
     });
 });
 </script>
