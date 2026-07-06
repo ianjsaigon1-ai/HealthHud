@@ -1,0 +1,2156 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health HUD — Personal Health Heads-Up Display</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              display: ['Orbitron', 'sans-serif'],
+              mono: ['Share Tech Mono', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            background-color: #020617;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(30,58,138,0.3) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(88,28,135,0.2) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 80%, rgba(15,118,110,0.15) 0%, transparent 50%);
+            background-size: cover;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 200, 255, 0.008) 2px,
+                rgba(0, 200, 255, 0.008) 4px
+            );
+            pointer-events: none;
+            z-index: 9998;
+        }
+
+        .tt {
+            border-bottom: 1px dashed rgba(0, 200, 255, 0.4);
+            cursor: help;
+        }
+
+        .tt-box {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            background: rgba(3, 7, 18, 0.98);
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            border-radius: 8px;
+            padding: 14px;
+            max-width: 340px;
+            font-size: 0.75rem;
+            line-height: 1.6;
+            color: #a8c8e8;
+            pointer-events: none;
+            box-shadow: 0 0 25px rgba(0, 200, 255, 0.25);
+        }
+
+        .glow-title {
+            text-shadow: 0 0 15px rgba(0, 200, 255, 0.6);
+        }
+
+        /* Custom Scrollbar for matrix look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.8);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 200, 255, 0.3);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 200, 255, 0.6);
+        }
+
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            body::after {
+                display: none;
+            }
+            .tab-panel {
+                display: block !important;
+                page-break-after: always;
+            }
+            nav, header, .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-[#c8d8e8] selection:bg-[#00c8ff] selection:text-black min-h-screen">
+    <div class="max-w-[1250px] mx-auto bg-[#050a19]/85 backdrop-blur-xl border-x border-[#00c8ff]/20 min-h-screen flex flex-col shadow-[0_0_50px_rgba(0,150,255,0.1)]">
+        
+        <!-- Header -->
+        <header class="border-b border-[#00c8ff]/30 p-6 text-center relative overflow-hidden bg-[#000a1e]/95">
+            <div class="text-[10px] tracking-[0.35em] text-[#00c8ff]/60 font-mono mb-1">
+                BIOMETRIC MONITORING SYSTEM // REAL-TIME HEALTH TELEMETRY
+            </div>
+            <h1 class="font-display font-black text-3xl md:text-5xl text-[#00c8ff] tracking-[0.2em] uppercase select-none glow-title">
+                HEALTH HUD
+            </h1>
+            <div class="text-[10px] tracking-[0.3em] text-[#00c8ff]/50 font-mono mt-1">
+                ◈ PERSONAL HEALTH HEADS-UP DISPLAY ◈
+            </div>
+        </header>
+
+        <!-- Actions Panel (no-print) -->
+        <section class="no-print bg-black/95 p-3 px-4 border-b border-[#00c8ff]/25 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap gap-2">
+                <button onclick="window.print()" class="bg-[#052e16] text-[#4ade80] border border-[#16a34a] hover:bg-[#16a34a]/30 transition px-3 py-1.5 rounded font-display text-[11px] font-bold">
+                    🖨️ Print Report
+                </button>
+                <button onclick="exportJSON()" class="bg-[#052e2e] text-[#2dd4bf] border border-[#0d9488] hover:bg-[#0d9488]/30 transition px-3 py-1.5 rounded font-display text-[11px] font-bold">
+                    📤 Export Backup
+                </button>
+                <label class="bg-[#052e2e] text-[#34d399] border border-[#059669] hover:bg-[#059669]/30 transition px-3 py-1.5 rounded font-display text-[11px] font-bold cursor-pointer">
+                    📥 Import Backup
+                    <input type="file" id="importInput" accept=".json" onchange="importJSON(event)" class="hidden">
+                </label>
+                <button onclick="clearAllData()" class="bg-[#310505] text-[#f87171] border border-[#b91c1c] hover:bg-[#b91c1c]/30 transition px-3 py-1.5 rounded font-display text-[11px] font-bold">
+                    💥 Clear Profile
+                </button>
+                <button onclick="restoreSeeds()" class="bg-[#1e1b4b] text-[#c084fc] border border-[#7c3aed] hover:bg-[#7c3aed]/30 transition px-3 py-1.5 rounded font-display text-[11px] font-bold">
+                    ↺ Restore Seeds
+                </button>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono text-[#00c8ff]/60">KEY:</span>
+                <input
+                  type="password"
+                  id="apiKeyInput"
+                  placeholder="Anthropic / OpenAI / Gemini key"
+                  oninput="saveApiKey(this.value)"
+                  class="bg-slate-900 border border-[#00c8ff]/30 text-xs text-[#a8c8e8] font-mono p-1 px-2 rounded w-44 focus:outline-none focus:border-[#00c8ff]"
+                />
+            </div>
+        </section>
+
+        <!-- Profile Dashboard -->
+        <section class="m-4 md:m-6 grid grid-cols-1 md:grid-cols-3 border-2 border-[#1e1b4b] rounded-xl bg-[#0d0d1a] overflow-hidden shadow-[0_0_25px_rgba(99,102,241,0.15)]">
+            <!-- Identity Info -->
+            <div class="p-4 border-b md:border-b-0 md:border-r border-[#1e1b4b]">
+                <h3 class="font-display font-semibold text-xs text-[#00c8ff] uppercase tracking-wider pb-2 border-b border-[#00c8ff]/20 mb-3 flex items-center gap-1.5">
+                    ◈ Identity
+                </h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-[10px] uppercase tracking-wider text-[#00c8ff]/40 font-mono block">Patient Name</label>
+                        <input type="text" id="piName" oninput="savePersonal()" class="bg-slate-950 border border-[#00c8ff]/20 rounded p-1 px-2 text-sm text-slate-100 font-mono w-full focus:outline-none focus:border-[#00c8ff]/50">
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase tracking-wider text-[#00c8ff]/40 font-mono block">Date of Birth</label>
+                        <input type="date" id="piDOB" onchange="savePersonal()" class="bg-slate-950 border border-[#00c8ff]/20 rounded p-1 px-2 text-sm text-slate-100 font-mono w-full focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase tracking-wider text-[#00c8ff]/40 font-mono block">Age Metric</label>
+                        <div id="ageDisplay" class="text-sm font-semibold text-[#00c8ff] font-mono mt-0.5">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body Metrics -->
+            <div class="p-4 border-b md:border-b-0 md:border-r border-[#1e1b4b]">
+                <h3 class="font-display font-semibold text-xs text-[#a3e635] uppercase tracking-wider pb-2 border-b border-[#a3e635]/20 mb-3 flex items-center gap-1.5">
+                    ◈ Body Metrics
+                </h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-[10px] uppercase tracking-wider text-[#00c8ff]/40 font-mono block">Height (cm)</label>
+                        <input type="number" id="piHeight" oninput="savePersonal()" placeholder="e.g. 178" class="bg-slate-950 border border-[#a3e635]/20 rounded p-1 px-2 text-sm text-slate-100 font-mono w-full focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase tracking-wider text-[#00c8ff]/40 font-mono block">Weight History</label>
+                        <div id="weightLogContainer" class="max-h-20 overflow-y-auto space-y-1 mt-1 pr-1"></div>
+                        <div class="flex gap-2 mt-2">
+                            <button onclick="addWeight()" class="bg-slate-900 border border-slate-800 hover:bg-slate-850 px-2 py-0.5 rounded text-[10px] font-mono text-[#a3e635]">＋ Add</button>
+                            <button onclick="clearWeight()" class="bg-slate-900 border border-slate-800 hover:bg-slate-850 px-2 py-0.5 rounded text-[10px] font-mono text-red-400">↺ Reset</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase tracking-wider text-[#00c8ff]/40 font-mono block">Calculated BMI</label>
+                        <div id="bmiDisplay" class="text-sm font-semibold font-mono text-[#a3e635] mt-0.5">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blood Pressure -->
+            <div class="p-4">
+                <h3 class="font-display font-semibold text-xs text-[#f472b6] uppercase tracking-wider pb-2 border-b border-[#f472b6]/20 mb-3 flex items-center gap-1.5">
+                    ◈ Blood Pressure
+                </h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-[10px] uppercase tracking-wider text-[#00c8ff]/40 font-mono block">BP Readings (systolic/diastolic)</label>
+                        <div id="bpLogContainer" class="max-h-28 overflow-y-auto space-y-1 mt-1 pr-1"></div>
+                        <div class="flex gap-2 mt-2">
+                            <button onclick="addBP()" class="bg-slate-900 border border-slate-800 hover:bg-slate-850 px-2 py-0.5 rounded text-[10px] font-mono text-pink-400">＋ Add</button>
+                            <button onclick="clearBP()" class="bg-slate-900 border border-slate-800 hover:bg-slate-850 px-2 py-0.5 rounded text-[10px] font-mono text-red-400">↺ Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabs Navigation -->
+        <nav class="no-print flex flex-wrap bg-black/40 border-b border-[#00c8ff]/20 px-4 gap-1">
+            <button onclick="switchTab('tab-overview')" id="btn-tab-overview" class="tab-btn font-display text-[10px] md:text-xs font-semibold py-3 px-4 border-b-2 tracking-wider transition">🏠 Overview</button>
+            <button onclick="switchTab('tab-ecg')" id="btn-tab-ecg" class="tab-btn font-display text-[10px] md:text-xs font-semibold py-3 px-4 border-b-2 tracking-wider transition">❤️ ECG & Heart</button>
+            <button onclick="switchTab('tab-echo')" id="btn-tab-echo" class="tab-btn font-display text-[10px] md:text-xs font-semibold py-3 px-4 border-b-2 tracking-wider transition">🔬 Echo</button>
+            <button onclick="switchTab('tab-carotid')" id="btn-tab-carotid" class="tab-btn font-display text-[10px] md:text-xs font-semibold py-3 px-4 border-b-2 tracking-wider transition">🫀 Carotid</button>
+            <button onclick="switchTab('tab-lft')" id="btn-tab-lft" class="tab-btn font-display text-[10px] md:text-xs font-semibold py-3 px-4 border-b-2 tracking-wider transition">🌿 Liver (LFT)</button>
+            <button onclick="switchTab('tab-kft')" id="btn-tab-kft" class="tab-btn font-display text-[10px] md:text-xs font-semibold py-3 px-4 border-b-2 tracking-wider transition">💧 Kidney (KFT)</button>
+            <button onclick="switchTab('tab-metabolic')" id="btn-tab-metabolic" class="tab-btn font-display text-[10px] md:text-xs font-semibold py-3 px-4 border-b-2 tracking-wider transition">⚡ Metabolic</button>
+            <button onclick="switchTab('tab-blood')" id="btn-tab-blood" class="tab-btn font-display text-[10px] md:text-xs font-semibold py-3 px-4 border-b-2 tracking-wider transition">🔴 Blood Panel</button>
+            <button onclick="switchTab('tab-overall')" id="btn-tab-overall" class="tab-btn font-display text-[10px] md:text-xs font-semibold py-3 px-4 border-b-2 tracking-wider transition">📊 Assessment</button>
+            <button onclick="switchTab('tab-scans')" id="btn-tab-scans" class="tab-btn font-display text-[10px] md:text-xs font-semibold py-3 px-4 border-b-2 tracking-wider transition">📂 Scans & AI</button>
+        </nav>
+
+        <!-- Tab Content Panels -->
+        <main class="p-4 md:p-6 flex-1">
+            
+            <!-- OVERVIEW TAB -->
+            <div id="tab-overview" class="tab-panel hidden space-y-6">
+                <div class="border border-[#00c8ff]/30 bg-[#001428]/60 p-5 rounded-lg">
+                    <h2 class="font-display text-lg font-bold text-[#00c8ff] uppercase tracking-wider" id="welcomeGreeting">Welcome back</h2>
+                    <p class="text-xs text-slate-400 font-mono mt-1">Biometric Cockpit System // Active Telemetry Channels</p>
+                </div>
+                
+                <!-- SVG Cockpit Gauges Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="gaugesGrid"></div>
+
+                <!-- Systems Check Panel -->
+                <div class="border-2 border-slate-800 bg-[#070b19] p-4 rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.8)] font-mono">
+                    <div class="text-xs text-[#00c8ff]/70 border-b border-slate-800 pb-2 mb-3 flex items-center justify-between">
+                        <span>📟 BIOMETRIC COCKPIT SYSTEM CHECK</span>
+                        <span class="text-[9px] text-[#00ff88]">SYSTEMS RESPONSIVE</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3" id="systemCheckContainer"></div>
+                </div>
+
+                <!-- High Density Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="overviewGrid"></div>
+            </div>
+
+            <!-- ECG TAB -->
+            <div id="tab-ecg" class="tab-panel hidden space-y-6">
+                <div class="border border-blue-500/30 bg-[#001e50]/40 p-5 rounded-lg">
+                    <h2 class="font-display text-sm tracking-wider text-blue-400 uppercase border-b border-blue-500/20 pb-3 mb-4">1. ECG Telemetry Logs</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left" id="ecgTable"></table>
+                    </div>
+                    
+                    <h3 class="text-xs font-mono text-[#00c8ff] uppercase tracking-wider mt-6 mb-3">Troponin Markers</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left" id="tropTable"></table>
+                    </div>
+
+                    <!-- Add Form -->
+                    <div class="mt-6 border border-blue-500/20 rounded overflow-hidden">
+                        <button onclick="toggleForm('form-ecg-box')" class="w-full text-left font-display text-[11px] bg-slate-950 p-2.5 text-blue-400 flex justify-between">
+                            <span>＋ Add New ECG / Troponin Reading</span>
+                            <span id="form-ecg-box-indicator">▶</span>
+                        </button>
+                        <div id="form-ecg-box" class="hidden p-4 bg-slate-950/90 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Date</label>
+                                <input type="date" id="addEcgDate" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Heart Rate (BPM)</label>
+                                <input type="number" id="addEcgHr" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Rhythm / Condition</label>
+                                <input type="text" id="addEcgRhythm" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">PR Interval (ms)</label>
+                                <input type="number" id="addEcgPr" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">QRS Complex (ms)</label>
+                                <input type="number" id="addEcgQrs" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">QT / QTc (ms)</label>
+                                <input type="text" id="addEcgQt" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="text-[10px] text-slate-400 block mb-1">Findings Summary</label>
+                                <input type="text" id="addEcgFindings" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Troponin I (pg/mL)</label>
+                                <input type="number" id="addEcgTroponin" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div class="md:col-span-2 text-right">
+                                <button onclick="saveEcgForm()" class="bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded text-xs text-white font-semibold">Save Entry</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ECHO TAB -->
+            <div id="tab-echo" class="tab-panel hidden space-y-6">
+                <div class="border border-yellow-500/30 bg-[#281e00]/40 p-5 rounded-lg">
+                    <h2 class="font-display text-sm tracking-wider text-[#c8a800] uppercase border-b border-[#c8a800]/20 pb-3 mb-4">2. Echocardiogram (Cardiac Ultrasound)</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left" id="echoTable"></table>
+                    </div>
+
+                    <!-- Add Form -->
+                    <div class="mt-6 border border-yellow-500/20 rounded overflow-hidden">
+                        <button onclick="toggleForm('form-echo-box')" class="w-full text-left font-display text-[11px] bg-slate-950 p-2.5 text-[#c8a800] flex justify-between">
+                            <span>＋ Add Echo Reading</span>
+                            <span id="form-echo-box-indicator">▶</span>
+                        </button>
+                        <div id="form-echo-box" class="hidden p-4 bg-slate-950/90 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Date</label>
+                                <input type="date" id="addEchoDate" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Ejection Fraction %</label>
+                                <input type="number" id="addEchoEf" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Left Ventricular Hypertrophy (LVH)</label>
+                                <input type="text" id="addEchoLvh" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white" placeholder="None / Mild / Moderate / Eccentric">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Mitral Regurgitation</label>
+                                <input type="text" id="addEchoMr" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white" placeholder="None / Trace / Mild">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Wall Motion</label>
+                                <input type="text" id="addEchoWm" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white" placeholder="Normal / Hypokinetic">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Notes</label>
+                                <input type="text" id="addEchoNotes" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div class="md:col-span-2 text-right">
+                                <button onclick="saveEchoForm()" class="bg-yellow-600 hover:bg-yellow-500 px-4 py-1.5 rounded text-xs text-white font-semibold">Save Entry</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CAROTID TAB -->
+            <div id="tab-carotid" class="tab-panel hidden space-y-6">
+                <div class="border border-red-500/30 bg-red-950/20 p-5 rounded-lg">
+                    <h2 class="font-display text-sm tracking-wider text-red-400 uppercase border-b border-red-500/20 pb-3 mb-4">3. Carotid Artery Ultrasound</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left" id="carotidTable"></table>
+                    </div>
+
+                    <!-- Add Form -->
+                    <div class="mt-6 border border-red-500/20 rounded overflow-hidden">
+                        <button onclick="toggleForm('form-carotid-box')" class="w-full text-left font-display text-[11px] bg-slate-950 p-2.5 text-red-400 flex justify-between">
+                            <span>＋ Add Carotid Reading</span>
+                            <span id="form-carotid-box-indicator">▶</span>
+                        </button>
+                        <div id="form-carotid-box" class="hidden p-4 bg-slate-950/90 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Date</label>
+                                <input type="date" id="addCarotidDate" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Right CCA IMT (mm)</label>
+                                <input type="text" id="addCarotidRcimt" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Right CCA PSV (cm/s)</label>
+                                <input type="text" id="addCarotidRcpsv" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Right ICA PSV (cm/s)</label>
+                                <input type="text" id="addCarotidRipsv" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Left CCA IMT (mm)</label>
+                                <input type="text" id="addCarotidLcimt" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Left CCA PSV (cm/s)</label>
+                                <input type="text" id="addCarotidLcpsv" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Left ICA PSV (cm/s)</label>
+                                <input type="text" id="addCarotidLipsv" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Plaque Burden</label>
+                                <input type="text" id="addCarotidPlaque" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white" placeholder="None / Minimal / Mild">
+                            </div>
+                            <div class="md:col-span-2 text-right">
+                                <button onclick="saveCarotidForm()" class="bg-red-600 hover:bg-red-500 px-4 py-1.5 rounded text-xs text-white font-semibold">Save Entry</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LIVER TAB -->
+            <div id="tab-lft" class="tab-panel hidden space-y-6">
+                <div class="border border-green-500/30 bg-green-950/20 p-5 rounded-lg">
+                    <h2 class="font-display text-sm tracking-wider text-green-400 uppercase border-b border-green-500/20 pb-3 mb-4">4. Liver Function Test (LFT) & Inflammation</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left" id="lftTable"></table>
+                    </div>
+
+                    <!-- Add Form -->
+                    <div class="mt-6 border border-green-500/20 rounded overflow-hidden">
+                        <button onclick="toggleForm('form-lft-box')" class="w-full text-left font-display text-[11px] bg-slate-950 p-2.5 text-green-400 flex justify-between">
+                            <span>＋ Add LFT Reading</span>
+                            <span id="form-lft-box-indicator">▶</span>
+                        </button>
+                        <div id="form-lft-box" class="hidden p-4 bg-slate-950/90 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Date</label>
+                                <input type="date" id="addLftDate" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">AST (U/L)</label>
+                                <input type="number" id="addLftAst" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">ALT (U/L)</label>
+                                <input type="number" id="addLftAlt" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">GGT (U/L)</label>
+                                <input type="number" id="addLftGgt" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Bilirubin (µmol/L)</label>
+                                <input type="text" id="addLftBili" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">CRP (mg/L)</label>
+                                <input type="text" id="addLftCrp" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div class="md:col-span-2 text-right">
+                                <button onclick="saveLftForm()" class="bg-green-600 hover:bg-green-500 px-4 py-1.5 rounded text-xs text-white font-semibold">Save Entry</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KIDNEY TAB -->
+            <div id="tab-kft" class="tab-panel hidden space-y-6">
+                <div class="border border-purple-500/30 bg-purple-950/20 p-5 rounded-lg">
+                    <h2 class="font-display text-sm tracking-wider text-purple-400 uppercase border-b border-purple-500/20 pb-3 mb-4">5. Kidney Function Test (KFT)</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left" id="kftTable"></table>
+                    </div>
+
+                    <!-- Add Form -->
+                    <div class="mt-6 border border-purple-500/20 rounded overflow-hidden">
+                        <button onclick="toggleForm('form-kft-box')" class="w-full text-left font-display text-[11px] bg-slate-950 p-2.5 text-purple-400 flex justify-between">
+                            <span>＋ Add KFT Reading</span>
+                            <span id="form-kft-box-indicator">▶</span>
+                        </button>
+                        <div id="form-kft-box" class="hidden p-4 bg-slate-950/90 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Date</label>
+                                <input type="date" id="addKftDate" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">eGFR (mL/min/1.73m²)</label>
+                                <input type="number" id="addKftEgfr" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Urea (mmol/L)</label>
+                                <input type="text" id="addKftUrea" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Creatinine (µmol/L)</label>
+                                <input type="number" id="addKftCreat" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">uACR (mg/g)</label>
+                                <input type="text" id="addKftUacr" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white" placeholder="Normal / Elevated">
+                            </div>
+                            <div class="md:col-span-2 text-right">
+                                <button onclick="saveKftForm()" class="bg-purple-600 hover:bg-purple-500 px-4 py-1.5 rounded text-xs text-white font-semibold">Save Entry</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- METABOLIC TAB -->
+            <div id="tab-metabolic" class="tab-panel hidden space-y-6">
+                <div class="border border-orange-500/30 bg-orange-950/20 p-5 rounded-lg">
+                    <h2 class="font-display text-sm tracking-wider text-orange-400 uppercase border-b border-orange-500/20 pb-3 mb-4">6. Metabolic & Lipid Panels</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left" id="metabolicTable"></table>
+                    </div>
+
+                    <!-- Add Form -->
+                    <div class="mt-6 border border-orange-500/20 rounded overflow-hidden">
+                        <button onclick="toggleForm('form-met-box')" class="w-full text-left font-display text-[11px] bg-slate-950 p-2.5 text-orange-400 flex justify-between">
+                            <span>＋ Add Metabolic Reading</span>
+                            <span id="form-met-box-indicator">▶</span>
+                        </button>
+                        <div id="form-met-box" class="hidden p-4 bg-slate-950/90 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Date</label>
+                                <input type="date" id="addMetDate" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">non-HDL (mmol/L)</label>
+                                <input type="text" id="addMetNonhdl" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">HDL (mmol/L)</label>
+                                <input type="text" id="addMetHdl" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">LDL (mmol/L)</label>
+                                <input type="text" id="addMetLdl" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Total Cholesterol (mmol/L)</label>
+                                <input type="text" id="addMetTotal" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Triglycerides (mmol/L)</label>
+                                <input type="text" id="addMetTri" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Glucose (mg/dL)</label>
+                                <input type="text" id="addMetGlucose" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">HbA1c Average %</label>
+                                <input type="text" id="addMetHba1c" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div class="md:col-span-2 text-right">
+                                <button onclick="saveMetForm()" class="bg-orange-600 hover:bg-orange-500 px-4 py-1.5 rounded text-xs text-white font-semibold">Save Entry</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BLOOD PANEL TAB -->
+            <div id="tab-blood" class="tab-panel hidden space-y-6">
+                <div class="border border-teal-500/30 bg-[#001c1c]/40 p-5 rounded-lg">
+                    <h2 class="font-display text-sm tracking-wider text-teal-400 uppercase border-b border-teal-500/20 pb-3 mb-4">7. Complete Blood Count (CBC)</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left" id="bloodTable"></table>
+                    </div>
+
+                    <!-- Add Form -->
+                    <div class="mt-6 border border-teal-500/20 rounded overflow-hidden">
+                        <button onclick="toggleForm('form-blood-box')" class="w-full text-left font-display text-[11px] bg-slate-950 p-2.5 text-teal-400 flex justify-between">
+                            <span>＋ Add Blood Panel Reading</span>
+                            <span id="form-blood-box-indicator">▶</span>
+                        </button>
+                        <div id="form-blood-box" class="hidden p-4 bg-slate-950/90 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Date</label>
+                                <input type="date" id="addBloodDate" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">WBC (x10^9/L)</label>
+                                <input type="text" id="addBloodWbc" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">NEU (x10^9/L)</label>
+                                <input type="text" id="addBloodNeu" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">LYM (x10^9/L)</label>
+                                <input type="text" id="addBloodLym" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">RBC (x10^12/L)</label>
+                                <input type="text" id="addBloodRbc" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">HGB (g/dL)</label>
+                                <input type="text" id="addBloodHgb" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">HCT (%)</label>
+                                <input type="text" id="addBloodHct" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">MCV (fL)</label>
+                                <input type="text" id="addBloodMcv" class="bg-slate-900 border border-slate-800 rounded p-1 text-xs w-full text-white">
+                            </div>
+                            <div class="md:col-span-2 text-right">
+                                <button onclick="saveBloodForm()" class="bg-teal-600 hover:bg-teal-500 px-4 py-1.5 rounded text-xs text-white font-semibold">Save Entry</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ASSESSMENT TAB -->
+            <div id="tab-overall" class="tab-panel hidden space-y-6">
+                <div class="border border-yellow-500/30 bg-yellow-950/20 p-5 rounded-lg">
+                    <h2 class="font-display text-sm tracking-wider text-yellow-400 uppercase border-b border-yellow-500/20 pb-3 mb-4">Overall Integrated Assessment</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="border-b border-yellow-500/30 bg-yellow-900/30 text-xs text-white">
+                                    <th class="p-2.5">Category</th>
+                                    <th class="p-2.5">Latest Finding</th>
+                                    <th class="p-2.5">Trend</th>
+                                    <th class="p-2.5">Concern Level</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-yellow-500/10 font-mono text-xs">
+                                <tr>
+                                    <td class="p-2.5 font-bold text-yellow-300">Rhythm &amp; Electrical (ECG)</td>
+                                    <td class="p-2.5">Stable sinus rhythm; flattened T waves Jun 2026</td>
+                                    <td class="p-2.5">Monitor</td>
+                                    <td class="p-2.5 text-[#ffaa00]">Watch (T wave findings)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-bold text-yellow-300">Heart Function (Echo)</td>
+                                    <td class="p-2.5">EF 65–70% preserved; mild eccentric LVH</td>
+                                    <td class="p-2.5">Stable</td>
+                                    <td class="p-2.5 text-[#ffaa00]">Mild (Likely hypertension-related)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-bold text-yellow-300">Blood Vessels (Carotid)</td>
+                                    <td class="p-2.5">Completely normal, no plaque buildup</td>
+                                    <td class="p-2.5">Excellent</td>
+                                    <td class="p-2.5 text-[#00ff88]">Very Low</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-bold text-yellow-300">Liver Enzymes (LFT)</td>
+                                    <td class="p-2.5">AST 38, ALT 32, CRP 0.031 mg/dL</td>
+                                    <td class="p-2.5">Excellent Improvement</td>
+                                    <td class="p-2.5 text-[#00ff88]">Normal</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-bold text-yellow-300">Kidney Filtration (KFT)</td>
+                                    <td class="p-2.5">Urea 7.3 mmol/L, Creatinine 93 µmol/L</td>
+                                    <td class="p-2.5">Stable</td>
+                                    <td class="p-2.5 text-[#00ff88]">Normal</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-bold text-yellow-300">Metabolic Panel</td>
+                                    <td class="p-2.5">HbA1c 5.2%, Fasting Glucose 103 mg/dL</td>
+                                    <td class="p-2.5">Stable Control</td>
+                                    <td class="p-2.5 text-[#00ff88]">Optimal Control</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h3 class="font-display text-[#ffcc00] text-xs uppercase tracking-wider mt-6 mb-3">Key Takeaways</h3>
+                    <div class="text-xs space-y-2 text-slate-300 font-mono">
+                        <p><strong>Strengths:</strong> Stable sinus rhythm, clean carotid arteries (no plaque), preserved ejection fraction (EF 65-70%), and optimal kidney filtration values.</p>
+                        <p><strong>Areas to Watch:</strong> Mild eccentric LVH on Echo; flattened T-waves in recent June 2026 ECG. Keep monitoring blood pressure closely.</p>
+                        <p><strong>Recommended Actions:</strong> Routine check-up with a cardiologist to monitor T-wave and LVH developments; maintain optimal blood pressure and lifestyle modifications.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCANS TAB -->
+            <div id="tab-scans" class="tab-panel hidden space-y-6">
+                <div class="border border-cyan-500/30 bg-[#00102a]/60 p-5 rounded-lg shadow-lg relative overflow-hidden">
+                    <h2 class="font-display text-sm tracking-wider text-[#00c8ff] uppercase border-b border-cyan-500/20 pb-3 mb-4">📂 Scans & Document Archive</h2>
+                    <p class="text-xs text-slate-400 font-mono mb-4">Upload and manage scanned biometric files locally within this standalone client.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+                        <div class="md:col-span-4 space-y-4">
+                            <!-- File Upload Form -->
+                            <label class="border-2 border-dashed border-slate-800 hover:border-[#00c8ff]/40 bg-slate-950/50 hover:bg-[#00102a]/30 p-4 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all text-center group min-h-[110px]">
+                                <input type="file" id="offlineScanUpload" accept="image/*,application/pdf,text/plain" onchange="handleOfflineScanUpload(event)" class="hidden" />
+                                <span class="text-2xl mb-1 transition-transform group-hover:scale-110">📤</span>
+                                <span class="text-[10px] font-mono font-semibold text-slate-300 uppercase tracking-wider">Upload Scan</span>
+                                <span class="text-[9px] text-slate-500 font-mono mt-0.5">Local Storage Only</span>
+                            </label>
+
+                            <!-- Scans Directory -->
+                            <div class="bg-slate-950/80 border border-slate-800 rounded-lg p-3 min-h-[160px] max-h-[220px] overflow-y-auto space-y-2 font-mono text-xs">
+                                <div class="text-[9px] text-slate-500 uppercase tracking-widest border-b border-slate-900 pb-1 mb-2">Stored Documents</div>
+                                <div id="offlineScansList" class="space-y-2"></div>
+                            </div>
+                        </div>
+
+                        <!-- Scan Detail and Simulated Extraction Analysis Panel -->
+                        <div class="md:col-span-8 flex flex-col bg-slate-950/40 border border-slate-800/80 rounded-lg p-4 relative min-h-[280px]">
+                            <div id="offlineScanDetail" class="flex-1 flex flex-col items-center justify-center text-center p-6 bg-slate-950/50">
+                                <span class="text-3xl opacity-50 mb-2">📄</span>
+                                <p class="text-xs text-slate-400 font-mono">Select a scan from the stored documents directory on the left to review or run cognitive analyses.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Global Footer -->
+        <footer class="bg-black/90 border-t border-[#00c8ff]/20 p-4 text-center font-mono text-[10px] text-slate-500">
+            <div class="text-red-500 font-bold mb-1">
+                ⚠ HEALTH HUD IS A PERSONAL MONITORING SYSTEM — NOT CLINICAL ADVICE — CONSULT YOUR PHYSICIAN ⚠
+            </div>
+            <div>SYSTEM ACTIVE // STANDALONE ENGINE // SECURE LOCAL DATA PERSISTENCE</div>
+        </footer>
+    </div>
+
+    <!-- Hover Tooltip Element -->
+    <div class="tt-box" id="ttBox"></div>
+
+    <script>
+        // System Seeds matching standard reference sets
+        const SEEDS = {
+            personal: { name: "Ian Joubert", dob: "1971-01-01", height: "178" },
+            weightLog: [
+                { val: 82.4, date: "12 Jun 2026" },
+                { val: 83.1, date: "15 May 2026" },
+                { val: 84.0, date: "10 Apr 2026" }
+            ],
+            bpLog: [
+                { val: "128/82", date: "12 Jun 2026" },
+                { val: "130/84", date: "15 May 2026" },
+                { val: "135/88", date: "10 Apr 2026" }
+            ],
+            ecg: [
+                { date: "12 Jun 2026", hr: 56, rhythm: "Sinus bradycardia", bp: "128/82", pr: 165, qrs: 98, qt: "410 ms", findings: "Stable baseline; mild T-wave flattening in lateral leads." },
+                { date: "15 May 2026", hr: 62, rhythm: "Sinus rhythm", bp: "130/84", pr: 160, qrs: 95, qt: "405 ms", findings: "Within standard electrical physiological boundaries." }
+            ],
+            trop: [
+                { date: "12 Jun 2026", val: 12, notes: "Routine check-up panel" },
+                { date: "15 May 2026", val: 14, notes: "Standard wellness review" }
+            ],
+            echo: [
+                { date: "12 Jun 2026", ef: 65, lvh: "Mild Eccentric", mr: "Trace", wm: "Normal", notes: "Stable ejection fraction, normal global systolic performance." }
+            ],
+            carotid: [
+                { date: "12 Jun 2026", rcimt: "0.68", rcpsv: "92", ripsv: "80", lcimt: "0.65", lcpsv: "88", lipsv: "78", plaque: "None" }
+            ],
+            lft: [
+                { date: "12 Jun 2026", ast: 38, alt: 32, ggt: 24, bili: "12 µmol/L", crp: 1.2 }
+            ],
+            kft: [
+                { date: "12 Jun 2026", egfr: 93, urea: 7.3, creat: 93, uacr: "Normal" }
+            ],
+            met: [
+                { date: "12 Jun 2026", nonhdl: "3.2", hdl: "1.1", ldl: "2.4", total: "4.3", tri: "1.2", glucose: "103", hba1c: "5.2" }
+            ],
+            blood: [
+                { date: "12 Jun 2026", wbc: "6.2", neu: "3.8", lym: "1.9", rbc: "4.8", hgb: "14.5", hct: "42.1", mcv: "87.5" }
+            ],
+            scans: []
+        };
+
+        const GLOSSARY = {
+            heartrate: { name: "Heart Rate", normal: "60 - 100 bpm", def: "Number of heartbeats per minute. Reflects overall cardiovascular demand and autonomic regulation." },
+            rhythm: { name: "Cardiac Rhythm", normal: "Normal Sinus Rhythm", def: "The electrical system rhythm initiating from the sinus node. Ensures coordinated contraction patterns." },
+            pr: { name: "PR Interval", normal: "120 - 200 ms", def: "Time taken for the cardiac electrical impulse to travel from sinus node through the AV node to ventricles." },
+            qrs: { name: "QRS Duration", normal: "60 - 120 ms", def: "Represents duration of ventricular depolarization. Prolonged QRS can indicate conduction blocks." },
+            qtc: { name: "QTc Interval", normal: "Male < 450 ms, Female < 470 ms", def: "Heart rate-corrected measure of ventricular depolarization and repolarization time." },
+            troponin: { name: "Troponin I", normal: "< 26 pg/mL", def: "Highly sensitive biomarker for myocardial injury. Elevated levels indicate cardiac muscle strain or damage." },
+            ckmb: { name: "CK-MB", normal: "< 30 U/L", def: "Creatine kinase-myocardial band. Biomarker used to monitor or exclude active acute cardiac muscle damage." },
+            ef: { name: "Ejection Fraction", normal: "55% - 70%", def: "Percentage of blood leaving your heart's left ventricle each time it contracts." },
+            lvh: { name: "Left Ventricular Hypertrophy", normal: "Absent", def: "Thickening of the wall of the heart's main pumping chamber (left ventricle)." },
+            mr: { name: "Mitral Regurgitation", normal: "None to Trace", def: "Leakage of blood backward through the mitral valve each time the left ventricle contracts." },
+            wallmotion: { name: "Segmental Wall Motion", normal: "Normal", def: "Analysis of localized cardiac muscle contraction. Abnormalities point to ischemia or past structural strain." },
+            imt: { name: "Intima-Media Thickness", normal: "< 0.9 mm", def: "Thickness of the inner two layers of the carotid artery wall. Used to screen for subclinical atherosclerosis." },
+            psv: { name: "Peak Systolic Velocity", normal: "< 125 cm/s", def: "The maximum velocity of blood flow through target arterial segments during cardiac systole." },
+            plaque: { name: "Atherosclerotic Plaque", normal: "None Detected", def: "Localized abnormal accumulation of lipids, calcium, and fibrous tissue within the arterial wall." },
+            ast: { name: "Aspartate Aminotransferase", normal: "0 - 42 U/L", def: "Enzyme found mostly in heart and liver. Elevated in liver strain or cellular damage." },
+            alt: { name: "Alanine Aminotransferase", normal: "0 - 42 U/L", def: "Enzyme found primarily in the liver. A key indicator of active hepatic strain or cellular injury." },
+            ggt: { name: "Gamma-Glutamyl Transferase", normal: "5 - 40 U/L", def: "Enzyme reflecting biliary system health and oxidative stress in hepatobiliary pathways." },
+            bilirubin: { name: "Total Bilirubin", normal: "3 - 20 µmol/L", def: "Yellow byproduct of red blood cell breakdown, processed by liver and excreted in bile." },
+            crp: { name: "C-Reactive Protein", normal: "< 5 mg/L", def: "Inflammatory marker produced by the liver. Elevated during systemic inflammation or vascular distress." },
+            egfr: { name: "Estimated GFR", normal: "> 90 mL/min/1.73m²", def: "Calculated rate of kidney filtration. Below 60 indicates moderate filtration decline." },
+            urea: { name: "Blood Urea Nitrogen", normal: "1.7 - 8.3 mmol/L", def: "Nitrogenous waste product of protein metabolism, cleared via renal filtration." },
+            creatinine: { name: "Serum Creatinine", normal: "44 - 132 µmol/L", def: "Byproduct of muscle metabolism excreted completely by kidneys; sensitive marker of filtration." },
+            uacr: { name: "Urine Albumin/Creatinine Ratio", normal: "< 30 mg/g", def: "Detects trace leakage of albumin proteins into urine, signaling microvascular kidney damage." },
+            nonhdl: { name: "Non-HDL Cholesterol", normal: "< 3.37 mmol/L", def: "Total cholesterol minus HDL; represents all atherogenic lipoproteins." },
+            hdl: { name: "HDL Cholesterol", normal: "> 1.0 mmol/L", def: "High-Density Lipoprotein. Helps transport cholesterol out of peripheral arteries back to liver." },
+            ldl: { name: "LDL Cholesterol", normal: "< 2.5 mmol/L", def: "Low-Density Lipoprotein. Principal carrier of cholesterol associated with arterial plaque development." },
+            totalchol: { name: "Total Cholesterol", normal: "< 5.0 mmol/L", def: "Overall estimate of cholesterol levels within circulating blood plasma." },
+            triglycerides: { name: "Triglycerides", normal: "< 1.7 mmol/L", def: "Most common lipid type used to store excess energy. Excess levels increase risk of cardiovascular issues." },
+            glucose: { name: "Fasting Blood Glucose", normal: "70 - 100 mg/dL", def: "Amount of sugar circulating in blood stream after an overnight fast." },
+            hba1c: { name: "Hemoglobin A1c", normal: "< 5.7%", def: "Average percentage of blood glucose bound to hemoglobin over the past 2-3 months." },
+            wbc: { name: "White Blood Cells", normal: "3.6 - 10.2 x10^9/L", def: "Systemic immune response and defense cells. Elevated levels signify infection or acute strain." },
+            neu: { name: "Neutrophils", normal: "1.7 - 7.6 x10^9/L", def: "Most abundant white blood cell class; responsible for acute bacterial defense." },
+            lym: { name: "Lymphocytes", normal: "1.0 - 3.2 x10^9/L", def: "Key immune cell subtype regulating cellular memory, viral defense, and antibody production." },
+            rbc: { name: "Red Blood Cells", normal: "4.06 - 5.63 x10^12/L", def: "Oxygen carrying cells. Counts can signify anemia, hypoxia, or hydration imbalances." },
+            hgb: { name: "Hemoglobin", normal: "12.0 - 16.2 g/dL", def: "Iron-rich protein in red blood cells that physically binds and carries oxygen." },
+            hct: { name: "Hematocrit", normal: "36.0 - 48.6%", def: "The fractional volume of whole blood composed of packed red blood cells." },
+            mcv: { name: "Mean Corpuscular Volume", normal: "73.0 - 96.2 fL", def: "Average physical volume/size of individual red blood cells." }
+        };
+
+        // Active State DB
+        let db = {};
+
+        function loadAll() {
+            const stored = localStorage.getItem('standalone_hud_data');
+            if (stored) {
+                try {
+                    db = JSON.parse(stored);
+                } catch(e) {
+                    db = JSON.parse(JSON.stringify(SEEDS));
+                }
+            } else {
+                db = JSON.parse(JSON.stringify(SEEDS));
+            }
+            
+            // Ensure schema integrity on load
+            Object.keys(SEEDS).forEach(key => {
+                if (!db[key]) {
+                    db[key] = Array.isArray(SEEDS[key]) ? [...SEEDS[key]] : {...SEEDS[key]};
+                }
+            });
+
+            // Set inputs to reflect state
+            document.getElementById('piName').value = db.personal.name || "";
+            document.getElementById('piDOB').value = db.personal.dob || "";
+            document.getElementById('piHeight').value = db.personal.height || "";
+            document.getElementById('apiKeyInput').value = localStorage.getItem('hud_anthropic_key') || "";
+
+            recalcPersonal();
+            renderAll();
+        }
+
+        function saveAll() {
+            localStorage.setItem('standalone_hud_data', JSON.stringify(db));
+        }
+
+        function restoreSeeds() {
+            if (confirm('Restore standard baseline metrics? Your local overrides will be cleared.')) {
+                db = JSON.parse(JSON.stringify(SEEDS));
+                saveAll();
+                loadAll();
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Permanently wipe database storage on this system? This operation is irreversible.')) {
+                db = {
+                    personal: { name: '', dob: '', height: '' },
+                    weightLog: [],
+                    bpLog: [],
+                    ecg: [],
+                    trop: [],
+                    echo: [],
+                    carotid: [],
+                    lft: [],
+                    kft: [],
+                    met: [],
+                    blood: [],
+                    scans: []
+                };
+                saveAll();
+                loadAll();
+            }
+        }
+
+        function savePersonal() {
+            db.personal.name = document.getElementById('piName').value;
+            db.personal.dob = document.getElementById('piDOB').value;
+            db.personal.height = document.getElementById('piHeight').value;
+            saveAll();
+            recalcPersonal();
+            renderOverview();
+        }
+
+        function recalcPersonal() {
+            const dobVal = db.personal.dob;
+            if (dobVal) {
+                const birth = new Date(dobVal);
+                const now = new Date();
+                let age = now.getFullYear() - birth.getFullYear();
+                const m = now.getMonth() - birth.getMonth();
+                if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+                document.getElementById('ageDisplay').innerText = age + ' years old';
+            } else {
+                document.getElementById('ageDisplay').innerText = '—';
+            }
+
+            const ht = parseFloat(db.personal.height);
+            const wt = db.weightLog.length ? db.weightLog[0].val : NaN;
+            if (!isNaN(ht) && !isNaN(wt) && ht > 0) {
+                const bmi = (wt / ((ht / 100) * (ht / 100))).toFixed(1);
+                let cat = 'Normal';
+                const bNum = parseFloat(bmi);
+                if (bNum < 18.5) cat = 'Underweight';
+                else if (bNum < 25) cat = 'Normal';
+                else if (bNum < 30) cat = 'Overweight';
+                else cat = 'Obese';
+                document.getElementById('bmiDisplay').innerText = bmi + ' (' + cat + ')';
+            } else {
+                document.getElementById('bmiDisplay').innerText = '—';
+            }
+        }
+
+        function saveApiKey(val) {
+            localStorage.setItem('hud_anthropic_key', val);
+        }
+
+        function addWeight() {
+            const val = prompt('Enter body weight (kg):');
+            if (!val) return;
+            const num = parseFloat(val);
+            if (isNaN(num)) return alert('Enter a valid numeric value');
+            db.weightLog.unshift({
+                val: num,
+                date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+            });
+            saveAll();
+            loadAll();
+        }
+
+        function clearWeight() {
+            if (confirm('Reset weight logs?')) {
+                db.weightLog = [];
+                saveAll();
+                loadAll();
+            }
+        }
+
+        function addBP() {
+            const val = prompt('Enter Blood Pressure (format: 120/80):');
+            if (!val || !/^\d{2,3}\/\d{2,3}$/.test(val.trim())) return alert('Invalid format. Use systolic/diastolic (e.g. 120/80)');
+            db.bpLog.unshift({
+                val: val.trim(),
+                date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+            });
+            saveAll();
+            loadAll();
+        }
+
+        function clearBP() {
+            if (confirm('Reset blood pressure logs?')) {
+                db.bpLog = [];
+                saveAll();
+                loadAll();
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('border-[#00c8ff]', 'text-[#00c8ff]', 'bg-[#00c8ff]/5');
+                b.classList.add('border-transparent', 'text-slate-500');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-transparent', 'text-slate-500');
+                activeBtn.classList.add('border-[#00c8ff]', 'text-[#00c8ff]', 'bg-[#00c8ff]/5');
+            }
+        }
+
+        function toggleForm(formId) {
+            const box = document.getElementById(formId);
+            const ind = document.getElementById(formId + '-indicator');
+            if (box.classList.contains('hidden')) {
+                box.classList.remove('hidden');
+                ind.innerText = '▼';
+            } else {
+                box.classList.add('hidden');
+                ind.innerText = '▶';
+            }
+        }
+
+        function flagText(val, lo, hi, unit = '') {
+            if (val === undefined || val === null || val === '—' || val === '') return '—';
+            const num = parseFloat(val);
+            if (isNaN(num)) return val + ' ' + unit;
+            if (num < lo || num > hi) {
+                return '<span class="text-[#ff6600] font-bold">' + val + ' ' + unit + ' ↑</span>';
+            }
+            return '<span class="text-[#00ff88]">' + val + ' ' + unit + '</span>';
+        }
+
+        // Programmatic Cockpit Gauge Component
+        function buildGaugeHTML(value, min = 0, max = 100, label = "Telemetry", unit = "", color = "#00c8ff", redline = null) {
+            const numericValue = parseFloat(value);
+            const sanitizedValue = isNaN(numericValue) ? min : Math.min(max, Math.max(min, numericValue));
+            const range = max - min;
+            let percentage = range > 0 ? ((sanitizedValue - min) / range) * 100 : 0;
+            const strokeDashoffset = (235.6 - (percentage / 100) * 235.6).toFixed(1);
+
+            // Needle calculations around (70, 70) coordinate space
+            const needleAngle = 135 + (percentage / 100) * 270;
+            const needleRad = (needleAngle * Math.PI) / 180;
+            const needleX = (70 + 45 * Math.cos(needleRad)).toFixed(2);
+            const needleY = (70 + 45 * Math.sin(needleRad)).toFixed(2);
+
+            // Generate scale markers
+            let ticksHTML = '';
+            const tickCount = 5;
+            for (let i = 0; i <= tickCount; i++) {
+                const tAngle = 135 + (i / tickCount) * 270;
+                const rad = (tAngle * Math.PI) / 180;
+                const x1 = (70 + 50 * Math.cos(rad)).toFixed(1);
+                const y1 = (70 + 50 * Math.sin(rad)).toFixed(1);
+                const x2 = (70 + 44 * Math.cos(rad)).toFixed(1);
+                const y2 = (70 + 44 * Math.sin(rad)).toFixed(1);
+                const xl = (70 + 33 * Math.cos(rad)).toFixed(1);
+                const yl = (70 + 33 * Math.sin(rad)).toFixed(1);
+                const val = Math.round(min + (i / tickCount) * range);
+                ticksHTML += `
+                    <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(255,255,255,0.25)" stroke-width="1.2" />
+                    <text x="${xl}" y="${yl}" fill="rgba(255,255,255,0.4)" font-size="5.5" font-family="monospace" text-anchor="middle" alignment-baseline="middle">${val}</text>
+                `;
+            }
+
+            return `
+                <div class="flex flex-col items-center justify-center bg-slate-950/90 p-5 border border-slate-800 rounded-xl relative overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.8)] group min-w-[150px]">
+                    <div class="relative w-36 h-36 flex items-center justify-center">
+                        <svg viewBox="0 0 140 140" class="absolute inset-0 m-auto w-32 h-32">
+                            <circle cx="70" cy="70" r="66" fill="none" stroke="rgba(0, 200, 255, 0.1)" stroke-width="1" />
+                            <circle cx="70" cy="70" r="62" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="1" stroke-dasharray="1,3" />
+                            <path d="M 34.6 105.4 A 50 50 0 1 1 105.4 105.4" fill="none" stroke="rgba(15, 23, 42, 0.8)" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M 34.6 105.4 A 50 50 0 1 1 105.4 105.4" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-dasharray="235.6" stroke-dashoffset="${strokeDashoffset}" class="transition-all duration-1000 ease-out"/>
+                            ${ticksHTML}
+                            <line x1="70" y1="70" x2="${needleX}" y2="${needleY}" stroke="#ff3333" stroke-width="2.2" stroke-linecap="round" class="transition-all duration-1000 ease-out"/>
+                            <circle cx="70" cy="70" r="10" fill="#090d16" stroke="rgba(0, 200, 255, 0.2)" stroke-width="1" />
+                            <circle cx="70" cy="70" r="5" fill="#ff3333" />
+                        </svg>
+                        <div class="absolute inset-x-0 bottom-[14px] flex flex-col items-center justify-center">
+                            <div class="bg-black/95 border border-slate-800/80 px-2 py-0.5 rounded shadow-[0_0_10px_rgba(0,0,0,0.5)] flex flex-col items-center">
+                                <span class="text-xs font-bold font-mono text-white tracking-tight">${isNaN(numericValue) ? '—' : numericValue}</span>
+                                <span class="text-[6px] font-mono text-slate-500 uppercase tracking-widest mt-0.5">${unit}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-2 w-full border-t border-slate-900 pt-2">
+                        <span class="text-[10px] font-display font-semibold text-[#00c8ff] uppercase tracking-wider block">${label}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render Controller
+        function renderAll() {
+            renderWeightLog();
+            renderBpLog();
+            renderGauges();
+            renderSystemCheck();
+            renderOverview();
+            renderEcg();
+            renderEcho();
+            renderCarotid();
+            renderLft();
+            renderKft();
+            renderMetabolic();
+            renderBlood();
+            renderScans();
+        }
+
+        function renderWeightLog() {
+            const container = document.getElementById('weightLogContainer');
+            container.innerHTML = db.weightLog.slice(0, 3).map(w => `
+                <div class="flex justify-between text-xs bg-slate-950/60 p-1 border border-slate-900 rounded font-mono">
+                    <span class="text-[#a3e635]">⚖️ ${w.val} kg</span>
+                    <span class="text-slate-500 text-[10px]">${w.date}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderBpLog() {
+            const container = document.getElementById('bpLogContainer');
+            container.innerHTML = db.bpLog.slice(0, 3).map(b => `
+                <div class="flex justify-between text-xs bg-slate-950/60 p-1 border border-slate-900 rounded font-mono">
+                    <span class="text-[#f472b6]">🩺 ${b.val} mmHg</span>
+                    <span class="text-slate-500 text-[10px]">${b.date}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderGauges() {
+            const latestHr = db.ecg.length ? db.ecg[0].hr : 72;
+            const latestBp = db.bpLog.length ? parseInt(db.bpLog[0].val.split('/')[0]) : 120;
+            const latestEf = db.echo.length ? db.echo[0].ef : 65;
+            const latestGfr = db.kft.length ? db.kft[0].egfr : 95;
+
+            const grid = document.getElementById('gaugesGrid');
+            grid.innerHTML = `
+                ${buildGaugeHTML(latestHr, 0, 180, "Heart Rate", "BPM", "#ef4444")}
+                ${buildGaugeHTML(latestBp, 80, 200, "Systolic BP", "mmHg", "#f472b6")}
+                ${buildGaugeHTML(latestEf, 20, 90, "Ejection Fraction", "EF%", "#00c8ff")}
+                ${buildGaugeHTML(latestGfr, 0, 150, "Kidney GFR", "mL/min", "#a3e635")}
+            `;
+        }
+
+        function renderSystemCheck() {
+            const container = document.getElementById('systemCheckContainer');
+            
+            const hasEcg = db.ecg.length > 0;
+            const ecgCond = hasEcg ? (db.ecg[0].rhythm || '—') : 'N/A';
+            const ecgStatusColor = hasEcg && ecgCond.toLowerCase().includes('sinus') ? 'bg-[#00ff88]' : (hasEcg ? 'bg-yellow-500' : 'bg-slate-600');
+
+            const hasEcho = db.echo.length > 0;
+            const echoLvh = hasEcho ? (db.echo[0].lvh || 'Normal') : 'N/A';
+            const echoStatusColor = hasEcho && (echoLvh.toLowerCase().includes('normal') || echoLvh.toLowerCase().includes('none')) ? 'bg-[#00ff88]' : (hasEcho ? 'bg-yellow-500' : 'bg-slate-600');
+
+            const hasCarotid = db.carotid.length > 0;
+            const carotidPlq = hasCarotid ? (db.carotid[0].plaque || 'None') : 'N/A';
+            const carotidColor = hasCarotid && (carotidPlq.toLowerCase() === 'none') ? 'bg-[#00ff88]' : (hasCarotid ? 'bg-yellow-500' : 'bg-slate-600');
+
+            const hasLft = db.lft.length > 0;
+            const lftAlt = hasLft ? parseFloat(db.lft[0].alt) : NaN;
+            const lftColor = hasLft && lftAlt <= 42 ? 'bg-[#00ff88]' : (hasLft ? 'bg-orange-500' : 'bg-slate-600');
+
+            const hasKft = db.kft.length > 0;
+            const kftGfr = hasKft ? parseFloat(db.kft[0].egfr) : NaN;
+            const kftColor = hasKft && kftGfr >= 90 ? 'bg-[#00ff88]' : (hasKft ? (kftGfr >= 60 ? 'bg-yellow-500' : 'bg-red-500') : 'bg-slate-600');
+
+            const hasMet = db.met.length > 0;
+            const metA1c = hasMet ? parseFloat(db.met[0].hba1c) : NaN;
+            const metColor = hasMet && metA1c <= 5.7 ? 'bg-[#00ff88]' : (hasMet ? 'bg-yellow-500' : 'bg-slate-600');
+
+            container.innerHTML = `
+                <div class="bg-slate-950 border border-slate-800 p-2 rounded flex flex-col items-center justify-center text-center">
+                    <div class="w-2.5 h-2.5 rounded-full mb-1 ${ecgStatusColor}"></div>
+                    <span class="text-[10px] text-white font-bold font-display">RHYM</span>
+                    <span class="text-[8px] text-slate-500 uppercase truncate max-w-full">${ecgCond}</span>
+                </div>
+                <div class="bg-slate-950 border border-slate-800 p-2 rounded flex flex-col items-center justify-center text-center">
+                    <div class="w-2.5 h-2.5 rounded-full mb-1 ${echoStatusColor}"></div>
+                    <span class="text-[10px] text-white font-bold font-display">LVH</span>
+                    <span class="text-[8px] text-slate-500 uppercase truncate max-w-full">${echoLvh}</span>
+                </div>
+                <div class="bg-slate-950 border border-slate-800 p-2 rounded flex flex-col items-center justify-center text-center">
+                    <div class="w-2.5 h-2.5 rounded-full mb-1 ${carotidColor}"></div>
+                    <span class="text-[10px] text-white font-bold font-display">PLQ</span>
+                    <span class="text-[8px] text-slate-500 uppercase truncate max-w-full">${carotidPlq}</span>
+                </div>
+                <div class="bg-slate-950 border border-slate-800 p-2 rounded flex flex-col items-center justify-center text-center">
+                    <div class="w-2.5 h-2.5 rounded-full mb-1 ${lftColor}"></div>
+                    <span class="text-[10px] text-white font-bold font-display">ENZY</span>
+                    <span class="text-[8px] text-slate-500 uppercase truncate max-w-full">${hasLft ? 'AST ' + db.lft[0].ast : 'N/A'}</span>
+                </div>
+                <div class="bg-slate-950 border border-slate-800 p-2 rounded flex flex-col items-center justify-center text-center">
+                    <div class="w-2.5 h-2.5 rounded-full mb-1 ${kftColor}"></div>
+                    <span class="text-[10px] text-white font-bold font-display">FILT</span>
+                    <span class="text-[8px] text-slate-500 uppercase truncate max-w-full">${hasKft ? 'GFR ' + db.kft[0].egfr : 'N/A'}</span>
+                </div>
+                <div class="bg-slate-950 border border-slate-800 p-2 rounded flex flex-col items-center justify-center text-center">
+                    <div class="w-2.5 h-2.5 rounded-full mb-1 ${metColor}"></div>
+                    <span class="text-[10px] text-white font-bold font-display">METB</span>
+                    <span class="text-[8px] text-slate-500 uppercase truncate max-w-full">${hasMet ? 'A1C ' + db.met[0].hba1c + '%' : 'N/A'}</span>
+                </div>
+            `;
+        }
+
+        function renderOverview() {
+            document.getElementById('welcomeGreeting').innerText = 'Welcome back, ' + (db.personal.name || 'User');
+            
+            const grid = document.getElementById('overviewGrid');
+            const latestEcg = db.ecg[0] || null;
+            const latestEcho = db.echo[0] || null;
+            const latestCarotid = db.carotid[0] || null;
+            const latestLft = db.lft[0] || null;
+            const latestKft = db.kft[0] || null;
+            const latestMet = db.met[0] || null;
+
+            grid.innerHTML = `
+                <!-- ECG Summary Card -->
+                <div class="border border-blue-500/20 bg-[#00102a]/60 p-4 rounded-lg flex flex-col justify-between shadow">
+                    <div>
+                        <div class="flex justify-between items-center border-b border-blue-500/10 pb-2 mb-3">
+                            <h3 class="font-display font-bold text-xs text-blue-400 uppercase tracking-wider">❤️ ECG & Heart</h3>
+                            <span class="text-[10px] font-mono text-slate-500">${latestEcg ? latestEcg.date : 'No records'}</span>
+                        </div>
+                        ${latestEcg ? `
+                            <div class="space-y-1.5 font-mono text-xs">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="heartrate">Heart Rate:</span>
+                                    <span class="text-[#00ff88]">${latestEcg.hr} bpm</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="rhythm">Rhythm:</span>
+                                    <span class="text-slate-300 truncate max-w-[130px]">${latestEcg.rhythm || '—'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="pr">PR Interval:</span>
+                                    <span class="text-slate-300">${latestEcg.pr ? latestEcg.pr + ' ms' : '—'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="qrs">QRS Complex:</span>
+                                    <span class="text-slate-300">${flagText(latestEcg.qrs, 60, 120, 'ms')}</span>
+                                </div>
+                            </div>
+                        ` : '<p class="text-xs text-slate-500 italic">No telemetry logged.</p>'}
+                    </div>
+                    <button onclick="switchTab('tab-ecg')" class="mt-4 text-left text-[10px] font-mono text-blue-400 hover:text-blue-300 transition-colors">Go to Tab →</button>
+                </div>
+
+                <!-- Echo Summary Card -->
+                <div class="border border-yellow-500/20 bg-[#1e1b00]/60 p-4 rounded-lg flex flex-col justify-between shadow">
+                    <div>
+                        <div class="flex justify-between items-center border-b border-yellow-500/10 pb-2 mb-3">
+                            <h3 class="font-display font-bold text-xs text-[#c8a800] uppercase tracking-wider">🔬 Echo</h3>
+                            <span class="text-[10px] font-mono text-slate-500">${latestEcho ? latestEcho.date : 'No records'}</span>
+                        </div>
+                        ${latestEcho ? `
+                            <div class="space-y-1.5 font-mono text-xs">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="ef">EF %:</span>
+                                    <span class="text-[#00ff88]">${latestEcho.ef}%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="lvh">LVH Status:</span>
+                                    <span class="text-slate-300">${latestEcho.lvh || '—'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="mr">Mitral Regurg:</span>
+                                    <span class="text-slate-300">${latestEcho.mr || '—'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="wallmotion">Wall Motion:</span>
+                                    <span class="text-slate-300">${latestEcho.wm || 'Normal'}</span>
+                                </div>
+                            </div>
+                        ` : '<p class="text-xs text-slate-500 italic">No echo assessments recorded.</p>'}
+                    </div>
+                    <button onclick="switchTab('tab-echo')" class="mt-4 text-left text-[10px] font-mono text-[#c8a800] hover:text-[#e4be1b] transition-colors">Go to Tab →</button>
+                </div>
+
+                <!-- Carotid Summary Card -->
+                <div class="border border-red-500/20 bg-[#1e0505]/60 p-4 rounded-lg flex flex-col justify-between shadow">
+                    <div>
+                        <div class="flex justify-between items-center border-b border-red-500/10 pb-2 mb-3">
+                            <h3 class="font-display font-bold text-xs text-red-400 uppercase tracking-wider">🫀 Carotid Ultrasound</h3>
+                            <span class="text-[10px] font-mono text-slate-500">${latestCarotid ? latestCarotid.date : 'No records'}</span>
+                        </div>
+                        ${latestCarotid ? `
+                            <div class="space-y-1.5 font-mono text-xs">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="imt">Right CCA IMT:</span>
+                                    <span class="text-slate-300">${latestCarotid.rcimt} mm</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="psv">Right CCA PSV:</span>
+                                    <span class="text-slate-300">${latestCarotid.rcpsv} cm/s</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="plaque">Plaque Status:</span>
+                                    <span class="text-slate-300">${latestCarotid.plaque || 'None'}</span>
+                                </div>
+                            </div>
+                        ` : '<p class="text-xs text-slate-500 italic">No carotid logs found.</p>'}
+                    </div>
+                    <button onclick="switchTab('tab-carotid')" class="mt-4 text-left text-[10px] font-mono text-red-400 hover:text-red-300 transition-colors">Go to Tab →</button>
+                </div>
+
+                <!-- Liver LFT Summary Card -->
+                <div class="border border-green-500/20 bg-[#001c0a]/60 p-4 rounded-lg flex flex-col justify-between shadow">
+                    <div>
+                        <div class="flex justify-between items-center border-b border-green-500/10 pb-2 mb-3">
+                            <h3 class="font-display font-bold text-xs text-green-400 uppercase tracking-wider">🌿 Liver Enzymes</h3>
+                            <span class="text-[10px] font-mono text-slate-500">${latestLft ? latestLft.date : 'No records'}</span>
+                        </div>
+                        ${latestLft ? `
+                            <div class="space-y-1.5 font-mono text-xs">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="ast">AST Enzyme:</span>
+                                    <span class="text-slate-300">${flagText(latestLft.ast, 0, 42, 'U/L')}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="alt">ALT Enzyme:</span>
+                                    <span class="text-slate-300">${flagText(latestLft.alt, 0, 42, 'U/L')}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="crp">CRP Inflamm.:</span>
+                                    <span class="text-slate-300">${flagText(latestLft.crp, 0, 5, 'mg/L')}</span>
+                                </div>
+                            </div>
+                        ` : '<p class="text-xs text-slate-500 italic">No panels registered.</p>'}
+                    </div>
+                    <button onclick="switchTab('tab-lft')" class="mt-4 text-left text-[10px] font-mono text-green-400 hover:text-green-300 transition-colors">Go to Tab →</button>
+                </div>
+
+                <!-- Kidney KFT Summary Card -->
+                <div class="border border-purple-500/20 bg-[#16001a]/60 p-4 rounded-lg flex flex-col justify-between shadow">
+                    <div>
+                        <div class="flex justify-between items-center border-b border-purple-500/10 pb-2 mb-3">
+                            <h3 class="font-display font-bold text-xs text-purple-400 uppercase tracking-wider">💧 Kidney (KFT)</h3>
+                            <span class="text-[10px] font-mono text-slate-500">${latestKft ? latestKft.date : 'No records'}</span>
+                        </div>
+                        ${latestKft ? `
+                            <div class="space-y-1.5 font-mono text-xs">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="egfr">eGFR Rate:</span>
+                                    <span class="text-slate-300">${flagText(latestKft.egfr, 60, 999, 'mL/min')}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="creatinine">Creatinine:</span>
+                                    <span class="text-slate-300">${flagText(latestKft.creat, 44, 132, 'µmol/L')}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="urea">Urea Level:</span>
+                                    <span class="text-slate-300">${flagText(latestKft.urea, 1.7, 8.3, 'mmol/L')}</span>
+                                </div>
+                            </div>
+                        ` : '<p class="text-xs text-slate-500 italic">No KFT metrics registered.</p>'}
+                    </div>
+                    <button onclick="switchTab('tab-kft')" class="mt-4 text-left text-[10px] font-mono text-purple-400 hover:text-purple-300 transition-colors">Go to Tab →</button>
+                </div>
+
+                <!-- Metabolic Summary Card -->
+                <div class="border border-orange-500/20 bg-[#1f0a00]/60 p-4 rounded-lg flex flex-col justify-between shadow">
+                    <div>
+                        <div class="flex justify-between items-center border-b border-orange-500/10 pb-2 mb-3">
+                            <h3 class="font-display font-bold text-xs text-orange-400 uppercase tracking-wider">⚡ Metabolic Panel</h3>
+                            <span class="text-[10px] font-mono text-slate-500">${latestMet ? latestMet.date : 'No records'}</span>
+                        </div>
+                        ${latestMet ? `
+                            <div class="space-y-1.5 font-mono text-xs">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="ldl">LDL:</span>
+                                    <span class="text-slate-300">${latestMet.ldl || '—'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="hba1c">HbA1c Average:</span>
+                                    <span class="text-slate-300">${latestMet.hba1c ? latestMet.hba1c + '%' : '—'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400 tt" data-tt="glucose">Glucose:</span>
+                                    <span class="text-slate-300">${latestMet.glucose ? latestMet.glucose + ' mg/dL' : '—'}</span>
+                                </div>
+                            </div>
+                        ` : '<p class="text-xs text-slate-500 italic">No parameters cataloged.</p>'}
+                    </div>
+                    <button onclick="switchTab('tab-metabolic')" class="mt-4 text-left text-[10px] font-mono text-orange-400 hover:text-orange-300 transition-colors">Go to Tab →</button>
+                </div>
+            `;
+        }
+
+        function renderEcg() {
+            const table = document.getElementById('ecgTable');
+            table.innerHTML = `
+                <thead>
+                    <tr class="border-b border-blue-500/30 bg-blue-950/40 text-xs text-white">
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Date</th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Condition / Rhythm</th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">BP</th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">BPM</th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="pr">PR (ms)</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="qrs">QRS (ms)</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="qtc">QT/QTc (ms)</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Findings</th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-blue-500/10 font-mono text-xs">
+                    ${db.ecg.map(e => `
+                        <tr class="hover:bg-blue-950/20">
+                            <td class="p-2.5 text-blue-200">${e.date}</td>
+                            <td class="p-2.5">${e.condition || e.rhythm || '—'}</td>
+                            <td class="p-2.5">${e.bp || '—'}</td>
+                            <td class="p-2.5 text-[#00ff88] font-bold">${e.hr || '—'}</td>
+                            <td class="p-2.5">${e.pr || '—'}</td>
+                            <td class="p-2.5">${flagText(e.qrs, 60, 120, 'ms')}</td>
+                            <td class="p-2.5">${e.qt || '—'}</td>
+                            <td class="p-2.5 text-slate-300">${e.findings || '—'}</td>
+                            <td class="p-2.5 font-semibold">${parseFloat(e.qrs || 0) > 120 ? '<span class="text-[#ff9900]">Monitor</span>' : '<span class="text-[#00ff88]">Normal</span>'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+
+            const tropTable = document.getElementById('tropTable');
+            tropTable.innerHTML = `
+                <thead>
+                    <tr class="border-b border-blue-500/30 bg-blue-950/20 text-xs text-white">
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Date</th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="troponin">Troponin I (pg/mL)</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Status</th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Notes</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-blue-500/10 font-mono text-xs">
+                    ${db.trop.map(t => `
+                        <tr class="hover:bg-blue-950/20">
+                            <td class="p-2.5">${t.date}</td>
+                            <td class="p-2.5">${flagText(t.val, 0, 26, 'pg/mL')}</td>
+                            <td class="p-2.5">${parseFloat(t.val || 0) > 26 ? '<span class="text-red-400 font-bold">Elevated ↑</span>' : '<span class="text-[#00ff88]">Normal</span>'}</td>
+                            <td class="p-2.5 text-slate-400">${t.notes || '—'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+        }
+
+        function renderEcho() {
+            const table = document.getElementById('echoTable');
+            table.innerHTML = `
+                <thead>
+                    <tr class="border-b border-yellow-500/30 bg-yellow-950/40 text-xs text-white">
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Date</th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="ef">Ejection Fraction (EF %)</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="lvh">Left Ventr. Hypertrophy</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="mr">Mitral Regurgitation</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="wallmotion">Wall Motion</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Notes</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-yellow-500/10 font-mono text-xs">
+                    ${db.echo.map(e => `
+                        <tr class="hover:bg-yellow-950/10">
+                            <td class="p-2.5 text-[#c8a800]">${e.date}</td>
+                            <td class="p-2.5">${flagText(e.ef, 55, 70, '%')}</td>
+                            <td class="p-2.5">${e.lvh || '—'}</td>
+                            <td class="p-2.5">${e.mr || '—'}</td>
+                            <td class="p-2.5">${e.wm || 'Normal'}</td>
+                            <td class="p-2.5 text-slate-300">${e.notes || '—'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+        }
+
+        function renderCarotid() {
+            const table = document.getElementById('carotidTable');
+            table.innerHTML = `
+                <thead>
+                    <tr class="border-b border-red-500/30 bg-red-950/40 text-xs text-white">
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Date</th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Artery Segment</th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="imt">IMT (mm)</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="psv">PSV (cm/s)</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="plaque">Stenosis / Plaque</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-red-500/10 font-mono text-xs">
+                    ${db.carotid.flatMap((c) => [
+                        { segment: 'Right CCA', imt: c.rcimt, psv: c.rcpsv, limit: 0.9, psvLimit: 125, date: c.date, plaque: c.plaque },
+                        { segment: 'Right ICA', imt: '—', psv: c.ripsv, limit: NaN, psvLimit: 125, date: '', plaque: c.plaque },
+                        { segment: 'Left CCA', imt: c.lcimt, psv: c.lcpsv, limit: 0.9, psvLimit: 125, date: '', plaque: c.plaque },
+                        { segment: 'Left ICA', imt: '—', psv: c.lipsv, limit: NaN, psvLimit: 125, date: '', plaque: c.plaque }
+                    ].map((row, rIdx) => `
+                        <tr class="hover:bg-red-950/10">
+                            ${rIdx === 0 ? `<td rowspan="4" class="p-2.5 align-middle border-r border-red-500/10 text-red-300 font-bold">${row.date}</td>` : ''}
+                            <td class="p-2.5 text-slate-200">${row.segment}</td>
+                            <td class="p-2.5">${row.imt !== '—' ? flagText(row.imt, 0, row.limit) : '—'}</td>
+                            <td class="p-2.5">${flagText(row.psv, 0, row.psvLimit)}</td>
+                            <td class="p-2.5 text-slate-400">${row.plaque || 'None'}</td>
+                            <td class="p-2.5 text-[#00ff88] font-semibold">Normal</td>
+                        </tr>
+                    `)).join('')}
+                </tbody>
+            `;
+        }
+
+        function renderLft() {
+            const table = document.getElementById('lftTable');
+            table.innerHTML = `
+                <thead>
+                    <tr class="border-b border-green-500/30 bg-green-950/40 text-xs text-white">
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Date</th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="ast">AST (U/L)</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="alt">ALT (U/L)</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="ggt">GGT (U/L)</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="bilirubin">Bilirubin</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="crp">CRP (mg/L)</span></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-green-500/10 font-mono text-xs">
+                    ${db.lft.map(e => `
+                        <tr class="hover:bg-green-950/10">
+                            <td class="p-2.5 text-green-300 font-bold">${e.date}</td>
+                            <td class="p-2.5">${flagText(e.ast, 0, 42, 'U/L')}</td>
+                            <td class="p-2.5">${flagText(e.alt, 0, 42, 'U/L')}</td>
+                            <td class="p-2.5">${flagText(e.ggt, 5, 40, 'U/L')}</td>
+                            <td class="p-2.5">${e.bili || '—'}</td>
+                            <td class="p-2.5">${flagText(e.crp, 0, 5, 'mg/L')}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+        }
+
+        function renderKft() {
+            const table = document.getElementById('kftTable');
+            table.innerHTML = `
+                <thead>
+                    <tr class="border-b border-purple-500/30 bg-purple-950/40 text-xs text-white">
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Date</th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="egfr">eGFR</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="urea">Urea</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="creatinine">Creatinine</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="uacr">uACR</span></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-purple-500/10 font-mono text-xs">
+                    ${db.kft.map(e => `
+                        <tr class="hover:bg-purple-950/10">
+                            <td class="p-2.5 text-purple-300 font-bold">${e.date}</td>
+                            <td class="p-2.5">${flagText(e.egfr, 60, 999, 'mL/min')}</td>
+                            <td class="p-2.5">${flagText(e.urea, 1.7, 8.3, 'mmol/L')}</td>
+                            <td class="p-2.5">${flagText(e.creat, 44, 132, 'µmol/L')}</td>
+                            <td class="p-2.5 text-slate-300">${e.uacr || '—'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+        }
+
+        function renderMetabolic() {
+            const table = document.getElementById('metabolicTable');
+            table.innerHTML = `
+                <thead>
+                    <tr class="border-b border-orange-500/30 bg-orange-950/40 text-xs text-white">
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Date</th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="nonhdl">non-HDL</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="hdl">HDL</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="ldl">LDL</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="totalchol">Total Chol.</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="triglycerides">Triglycerides</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="glucose">Glucose</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="hba1c">HbA1c</span></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-orange-500/10 font-mono text-xs">
+                    ${db.met.map(e => `
+                        <tr class="hover:bg-orange-950/10">
+                            <td class="p-2.5 text-orange-300 font-bold">${e.date}</td>
+                            <td class="p-2.5">${flagText(e.nonhdl, 0, 3.37, 'mmol/L')}</td>
+                            <td class="p-2.5">${flagText(e.hdl, 1.0, 5.0, 'mmol/L')}</td>
+                            <td class="p-2.5">${flagText(e.ldl, 0, 2.5, 'mmol/L')}</td>
+                            <td class="p-2.5">${flagText(e.total, 0, 5.0, 'mmol/L')}</td>
+                            <td class="p-2.5">${flagText(e.tri, 0, 1.7, 'mmol/L')}</td>
+                            <td class="p-2.5">${flagText(e.glucose, 70, 100, 'mg/dL')}</td>
+                            <td class="p-2.5 font-bold text-white">${e.hba1c ? e.hba1c + '%' : '—'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+        }
+
+        function renderBlood() {
+            const table = document.getElementById('bloodTable');
+            table.innerHTML = `
+                <thead>
+                    <tr class="border-b border-teal-500/30 bg-teal-950/40 text-xs text-white">
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider">Date</th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="wbc">WBC</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="neu">NEU</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="lym">LYM</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="rbc">RBC</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="hgb">HGB</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="hct">HCT</span></th>
+                        <th class="p-2.5 font-display text-[11px] uppercase tracking-wider"><span class="tt" data-tt="mcv">MCV</span></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-teal-500/10 font-mono text-xs">
+                    ${db.blood.map(e => `
+                        <tr class="hover:bg-teal-950/10">
+                            <td class="p-2.5 text-teal-300 font-bold">${e.date}</td>
+                            <td class="p-2.5">${flagText(e.wbc, 3.6, 10.2)}</td>
+                            <td class="p-2.5">${flagText(e.neu, 1.7, 7.6)}</td>
+                            <td class="p-2.5">${flagText(e.lym, 1.0, 3.2)}</td>
+                            <td class="p-2.5">${flagText(e.rbc, 4.06, 5.63)}</td>
+                            <td class="p-2.5">${flagText(e.hgb, 12, 16.2, 'g/dL')}</td>
+                            <td class="p-2.5">${flagText(e.hct, 36, 48.6, '%')}</td>
+                            <td class="p-2.5">${flagText(e.mcv, 73, 96.2, 'fL')}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+        }
+
+        let activeOfflineScanIndex = null;
+        let isAnalyzing = false;
+        let analysisResult = null;
+
+        function renderScans() {
+            const listContainer = document.getElementById('offlineScansList');
+            if (!listContainer) return;
+
+            if (!db.scans || db.scans.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center text-slate-500 italic text-[10px] py-6 font-mono">
+                        No local scans cataloged.
+                    </div>
+                `;
+            } else {
+                listContainer.innerHTML = db.scans.map((sc, index) => `
+                    <div class="p-2 rounded border transition-colors flex items-center justify-between ${activeOfflineScanIndex === index ? 'bg-[#001c38]/50 border-[#00c8ff]/40' : 'bg-slate-900/40 border-slate-800 hover:border-slate-700'}">
+                        <button onclick="selectOfflineScan(${index})" class="flex-1 text-left truncate pr-2 font-mono text-xs">
+                            <div class="font-bold text-slate-200 truncate">${sc.name}</div>
+                            <div class="text-[8px] text-slate-500 uppercase">${sc.type || 'DOCUMENT'}</div>
+                        </button>
+                        <button onclick="deleteOfflineScan(${index})" class="text-red-400 hover:text-red-300 font-bold p-1 text-[11px] transition-colors" title="Delete scan">
+                            🗑️
+                        </button>
+                    </div>
+                `).join('');
+            }
+            renderOfflineScanDetail();
+        }
+
+        function selectOfflineScan(index) {
+            activeOfflineScanIndex = index;
+            analysisResult = null;
+            renderScans();
+        }
+
+        function deleteOfflineScan(index) {
+            if (confirm('Delete this scan reference?')) {
+                db.scans.splice(index, 1);
+                if (activeOfflineScanIndex === index) {
+                    activeOfflineScanIndex = null;
+                } else if (activeOfflineScanIndex > index) {
+                    activeOfflineScanIndex--;
+                }
+                saveAll();
+                renderScans();
+            }
+        }
+
+        function handleOfflineScanUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const r = new FileReader();
+            r.onload = function(e) {
+                const base64Data = e.target.result;
+                const newScan = {
+                    name: file.name,
+                    type: file.type ? file.type.toUpperCase() : 'DOCUMENT',
+                    data: base64Data
+                };
+                if (!db.scans) db.scans = [];
+                db.scans.unshift(newScan);
+                saveAll();
+                activeOfflineScanIndex = 0;
+                renderScans();
+            };
+            r.readAsDataURL(file);
+        }
+
+        async function triggerCognitiveAnalysis() {
+            if (activeOfflineScanIndex === null || !db.scans[activeOfflineScanIndex]) return;
+            const targetScan = db.scans[activeOfflineScanIndex];
+
+            isAnalyzing = true;
+            renderOfflineScanDetail();
+
+            const key = localStorage.getItem('hud_anthropic_key') || '';
+            if (!key) {
+                // Execute Preseeded Demo Cognitive Simulation
+                setTimeout(() => {
+                    const filename = targetScan.name.toLowerCase();
+                    let demoResult = {
+                        category: "blood",
+                        summary: "Complete Blood Count (CBC) reveals standard white cell count and stable microcytic index parameters.",
+                        extractedData: {
+                            "WBC": "6.2 x10^9/L",
+                            "RBC": "4.8 x10^12/L",
+                            "Hemoglobin": "14.5 g/dL",
+                            "Hematocrit": "42.1%"
+                        },
+                        clinicalTakeaways: [
+                            "Hemoglobin concentration is optimal.",
+                            "Platelet levels reside inside standard safety limits.",
+                            "White cell differentials demonstrate normal systemic immune clearance."
+                        ]
+                    };
+
+                    if (filename.includes('ecg') || filename.includes('electro')) {
+                        demoResult = {
+                            category: "ecg",
+                            summary: "ECG strip records a stable sinus bradycardia with mild T-wave modifications, aligning with preseeded values.",
+                            extractedData: {
+                                "Heart Rate": "56 bpm",
+                                "Rhythm": "Sinus bradycardia",
+                                "PR Interval": "165 ms",
+                                "QRS Complex": "98 ms",
+                                "QT/QTc": "410 ms"
+                            },
+                            clinicalTakeaways: [
+                                "Conduction intervals are stable.",
+                                "Trace T-wave changes require periodic review but exhibit no acute ischemic signals."
+                            ]
+                        };
+                    } else if (filename.includes('liver') || filename.includes('lft')) {
+                        demoResult = {
+                            category: "lft",
+                            summary: "Metabolic panel documents minor ALT/AST enzyme variations, suggesting trace metabolic adaptations.",
+                            extractedData: {
+                                "AST": "38 U/L",
+                                "ALT": "32 U/L",
+                                "GGT": "24 U/L",
+                                "CRP": "1.2 mg/L"
+                            },
+                            clinicalTakeaways: [
+                                "Enzymatic liver profiles sit inside acceptable thresholds.",
+                                "CRP registers low, indicating absence of acute vascular or systemic inflammatory processes."
+                            ]
+                        };
+                    }
+
+                    analysisResult = demoResult;
+                    isAnalyzing = false;
+                    renderOfflineScanDetail();
+                }, 1500);
+            } else {
+                // Active Gemini cognitive call
+                try {
+                    const base64Parts = targetScan.data.split(',');
+                    const mimeType = base64Parts[0].split(';')[0].split(':')[1] || 'image/jpeg';
+                    const base64Data = base64Parts[1];
+
+                    const prompt = `You are a medical scan analyzer. Extract all metrics from this medical record or lab report image.
+Identify which category it belongs to: "ecg", "echo", "carotid", "lft", "kft", "metabolic", "blood".
+Return ONLY a valid JSON object matching this structure:
+{
+  "category": "ecg" | "echo" | "carotid" | "lft" | "kft" | "metabolic" | "blood",
+  "summary": "Short 1-2 sentence medical summary of findings",
+  "extractedData": {
+    "Metric Name": "Value"
+  },
+  "clinicalTakeaways": [
+    "takeaway 1",
+    "takeaway 2"
+  ]
+}
+Be precise. Return ONLY the JSON object without markdown formatting.`;
+
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+                    const response = await fetch(url, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    { inlineData: { mimeType, data: base64Data } },
+                                    { text: prompt }
+                                ]
+                            }]
+                        })
+                    });
+
+                    if (!response.ok) throw new Error(`Engine error (${response.status})`);
+                    const resData = await response.json();
+                    const rawText = resData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                    const cleanJson = rawText.replace(/```json\s?/i, '').replace(/```\s?$/, '').trim();
+                    analysisResult = JSON.parse(cleanJson);
+                } catch (err) {
+                    alert('Extraction failed. Verify key validity or connection settings.');
+                } finally {
+                    isAnalyzing = false;
+                    renderOfflineScanDetail();
+                }
+            }
+        }
+
+        function autologExtractedValues() {
+            if (!analysisResult) return;
+            const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+            if (analysisResult.category === 'ecg') {
+                const hrStr = analysisResult.extractedData['Heart Rate'] || '60';
+                db.ecg.unshift({
+                    date: today,
+                    hr: parseInt(hrStr),
+                    rhythm: analysisResult.extractedData['Rhythm'] || 'Sinus rhythm',
+                    pr: parseInt(analysisResult.extractedData['PR Interval'] || '160'),
+                    qrs: parseInt(analysisResult.extractedData['QRS Complex'] || '95'),
+                    qt: analysisResult.extractedData['QT/QTc'] || '400 ms',
+                    findings: analysisResult.summary
+                });
+            } else if (analysisResult.category === 'lft') {
+                db.lft.unshift({
+                    date: today,
+                    ast: parseInt(analysisResult.extractedData['AST'] || '30'),
+                    alt: parseInt(analysisResult.extractedData['ALT'] || '30'),
+                    ggt: parseInt(analysisResult.extractedData['GGT'] || '20'),
+                    bili: "12 µmol/L",
+                    crp: parseFloat(analysisResult.extractedData['CRP'] || '1.0')
+                });
+            } else if (analysisResult.category === 'blood') {
+                db.blood.unshift({
+                    date: today,
+                    wbc: analysisResult.extractedData['WBC'] || "6.0",
+                    neu: "3.5",
+                    lym: "2.0",
+                    rbc: analysisResult.extractedData['RBC'] || "4.5",
+                    hgb: analysisResult.extractedData['Hemoglobin'] || "14.0",
+                    hct: analysisResult.extractedData['Hematocrit'] || "42.0",
+                    mcv: "85.0"
+                });
+            }
+
+            saveAll();
+            loadAll();
+            alert(`Parsed telemetry auto-logged to active profiles.`);
+            analysisResult = null;
+            renderScans();
+        }
+
+        function renderOfflineScanDetail() {
+            const container = document.getElementById('offlineScanDetail');
+            if (!container) return;
+
+            if (activeOfflineScanIndex === null || !db.scans[activeOfflineScanIndex]) {
+                container.innerHTML = `
+                    <span class="text-3xl opacity-50 mb-2">📄</span>
+                    <p class="text-xs text-slate-400 font-mono">Select a scan from the directory on the left to start telemetry analysis.</p>
+                `;
+                return;
+            }
+
+            const sc = db.scans[activeOfflineScanIndex];
+            const isImage = sc.data && sc.data.startsWith('data:image/');
+
+            let contentHTML = `
+                <div class="flex items-center justify-between border-b border-slate-900 pb-2 mb-4 w-full">
+                    <div>
+                        <span class="text-[9px] text-slate-500 uppercase font-mono">OFFLINE REFERENCE</span>
+                        <h4 class="font-bold font-mono text-slate-200 text-xs truncate max-w-[280px] sm:max-w-md">${sc.name}</h4>
+                    </div>
+                    <button onclick="triggerCognitiveAnalysis()" class="bg-[#00c8ff]/10 border border-[#00c8ff]/30 hover:bg-[#00c8ff]/20 text-[#00c8ff] text-[10px] font-mono uppercase px-2.5 py-1 rounded transition-all">
+                        ${isAnalyzing ? 'Extracting...' : '🧠 Run AI Extraction'}
+                    </button>
+                </div>
+            `;
+
+            if (isAnalyzing) {
+                contentHTML += `
+                    <div class="flex-1 flex flex-col items-center justify-center py-12">
+                        <span class="text-3xl animate-bounce mb-3">🤖</span>
+                        <p class="text-xs text-slate-300 font-mono animate-pulse">Running cognitive OCR parsing operations...</p>
+                    </div>
+                `;
+            } else if (analysisResult) {
+                contentHTML += `
+                    <div class="flex-1 overflow-y-auto space-y-4 text-left w-full pr-1 font-mono text-xs">
+                        <div class="bg-[#001a1a] border border-[#00ff88]/20 p-3 rounded">
+                            <div class="text-[9px] text-[#00ff88] font-bold uppercase tracking-wider mb-1">📋 Cognitive Narrative Summary</div>
+                            <p class="text-slate-300 text-[11px] leading-relaxed">${analysisResult.summary}</p>
+                        </div>
+                        <div>
+                            <div class="text-[9px] text-slate-500 uppercase tracking-widest border-b border-slate-900 pb-1 mb-2">📊 Extracted Parameters</div>
+                            <div class="grid grid-cols-2 gap-2">
+                                ${Object.entries(analysisResult.extractedData || {}).map(([k, v]) => `
+                                    <div class="bg-slate-950/80 p-2 rounded border border-slate-900 flex justify-between items-center">
+                                        <span class="text-slate-400 text-[10px] truncate">${k}</span>
+                                        <span class="text-[#00ff88] font-bold">${v}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-[9px] text-slate-500 uppercase tracking-widest border-b border-slate-900 pb-1 mb-2">💡 Clinical Parameters</div>
+                            <ul class="list-disc pl-4 space-y-1 text-slate-400 text-[11px]">
+                                ${(analysisResult.clinicalTakeaways || []).map(t => `<li>${t}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="border-t border-slate-900 pt-3 flex justify-between items-center">
+                            <span class="text-[9px] text-yellow-500 uppercase">Target: ${analysisResult.category.toUpperCase()}</span>
+                            <button onclick="autologExtractedValues()" class="bg-[#00ff88]/10 border border-[#00ff88]/30 hover:bg-[#00ff88]/20 text-[#00ff88] text-[10px] font-bold uppercase px-3 py-1 rounded transition-all">
+                                📥 Autofill Profile
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                contentHTML += `
+                    <div class="flex-1 flex flex-col md:flex-row gap-4 items-center bg-slate-950/60 p-3 rounded border border-slate-900 w-full text-left">
+                        ${isImage ? `<img src="${sc.data}" class="w-24 h-24 object-contain rounded border border-slate-800" />` : '<div class="w-24 h-24 bg-slate-900 rounded flex items-center justify-center text-3xl">📄</div>'}
+                        <div class="flex-1 font-mono text-[11px] text-slate-400 space-y-1">
+                            <div><span class="text-slate-500">Document Type:</span> ${sc.type || 'DOCUMENT'}</div>
+                            <div><span class="text-slate-500">Allocation Size:</span> ${Math.round((sc.data || '').length / 1024)} KB</div>
+                            <div class="text-[10px] text-cyan-400 mt-2">Ready to compile with cognitive parser. Click "Run AI Extraction" to parse.</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = contentHTML;
+        }
+
+        // Form Submission Engines
+        function buildFormattedDate(dateStr) {
+            if (!dateStr) return '';
+            const dobObj = new Date(dateStr);
+            return dobObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function saveEcgForm() {
+            const dateInput = document.getElementById('addEcgDate').value;
+            if (!dateInput) return alert('Date is required');
+            
+            const date = buildFormattedDate(dateInput);
+            const hr = parseInt(document.getElementById('addEcgHr').value) || 72;
+            const rhythm = document.getElementById('addEcgRhythm').value || 'Sinus Rhythm';
+            const pr = parseInt(document.getElementById('addEcgPr').value) || null;
+            const qrs = parseInt(document.getElementById('addEcgQrs').value) || null;
+            const qt = document.getElementById('addEcgQt').value || '—';
+            const findings = document.getElementById('addEcgFindings').value || 'Normal';
+            const troponin = parseFloat(document.getElementById('addEcgTroponin').value) || null;
+
+            db.ecg.unshift({ date, hr, rhythm, pr, qrs, qt, findings });
+            if (troponin !== null) {
+                db.trop.unshift({ date, val: troponin, notes: "Logged with ECG" });
+            }
+
+            saveAll();
+            loadAll();
+            toggleForm('form-ecg-box');
+        }
+
+        function saveEchoForm() {
+            const dateInput = document.getElementById('addEchoDate').value;
+            if (!dateInput) return alert('Date is required');
+
+            const date = buildFormattedDate(dateInput);
+            const ef = parseInt(document.getElementById('addEchoEf').value) || 60;
+            const lvh = document.getElementById('addEchoLvh').value || 'None';
+            const mr = document.getElementById('addEchoMr').value || 'None';
+            const wm = document.getElementById('addEchoWm').value || 'Normal';
+            const notes = document.getElementById('addEchoNotes').value || '';
+
+            db.echo.unshift({ date, ef, lvh, mr, wm, notes });
+            saveAll();
+            loadAll();
+            toggleForm('form-echo-box');
+        }
+
+        function saveCarotidForm() {
+            const dateInput = document.getElementById('addCarotidDate').value;
+            if (!dateInput) return alert('Date is required');
+
+            const date = buildFormattedDate(dateInput);
+            const rcimt = document.getElementById('addCarotidRcimt').value || '0.0';
+            const rcpsv = document.getElementById('addCarotidRcpsv').value || '0';
+            const ripsv = document.getElementById('addCarotidRipsv').value || '0';
+            const lcimt = document.getElementById('addCarotidLcimt').value || '0.0';
+            const lcpsv = document.getElementById('addCarotidLcpsv').value || '0';
+            const lipsv = document.getElementById('addCarotidLipsv').value || '0';
+            const plaque = document.getElementById('addCarotidPlaque').value || 'None';
+
+            db.carotid.unshift({ date, rcimt, rcpsv, ripsv, lcimt, lcpsv, lipsv, plaque });
+            saveAll();
+            loadAll();
+            toggleForm('form-carotid-box');
+        }
+
+        function saveLftForm() {
+            const dateInput = document.getElementById('addLftDate').value;
+            if (!dateInput) return alert('Date is required');
+
+            const date = buildFormattedDate(dateInput);
+            const ast = parseInt(document.getElementById('addLftAst').value) || 0;
+            const alt = parseInt(document.getElementById('addLftAlt').value) || 0;
+            const ggt = parseInt(document.getElementById('addLftGgt').value) || 0;
+            const bili = document.getElementById('addLftBili').value || '—';
+            const crp = parseFloat(document.getElementById('addLftCrp').value) || 0.0;
+
+            db.lft.unshift({ date, ast, alt, ggt, bili, crp });
+            saveAll();
+            loadAll();
+            toggleForm('form-lft-box');
+        }
+
+        function saveKftForm() {
+            const dateInput = document.getElementById('addKftDate').value;
+            if (!dateInput) return alert('Date is required');
+
+            const date = buildFormattedDate(dateInput);
+            const egfr = parseInt(document.getElementById('addKftEgfr').value) || 90;
+            const urea = document.getElementById('addKftUrea').value || '0.0';
+            const creat = parseInt(document.getElementById('addKftCreat').value) || 0;
+            const uacr = document.getElementById('addKftUacr').value || 'Normal';
+
+            db.kft.unshift({ date, egfr, urea, creat, uacr });
+            saveAll();
+            loadAll();
+            toggleForm('form-kft-box');
+        }
+
+        function saveMetForm() {
+            const dateInput = document.getElementById('addMetDate').value;
+            if (!dateInput) return alert('Date is required');
+
+            const date = buildFormattedDate(dateInput);
+            const nonhdl = document.getElementById('addMetNonhdl').value || '—';
+            const hdl = document.getElementById('addMetHdl').value || '—';
+            const ldl = document.getElementById('addMetLdl').value || '—';
+            const total = document.getElementById('addMetTotal').value || '—';
+            const tri = document.getElementById('addMetTri').value || '—';
+            const glucose = document.getElementById('addMetGlucose').value || '—';
+            const hba1c = document.getElementById('addMetHba1c').value || '—';
+
+            db.met.unshift({ date, nonhdl, hdl, ldl, total, tri, glucose, hba1c });
+            saveAll();
+            loadAll();
+            toggleForm('form-met-box');
+        }
+
+        function saveBloodForm() {
+            const dateInput = document.getElementById('addBloodDate').value;
+            if (!dateInput) return alert('Date is required');
+
+            const date = buildFormattedDate(dateInput);
+            const wbc = document.getElementById('addBloodWbc').value || '—';
+            const neu = document.getElementById('addBloodNeu').value || '—';
+            const lym = document.getElementById('addBloodLym').value || '—';
+            const rbc = document.getElementById('addBloodRbc').value || '—';
+            const hgb = document.getElementById('addBloodHgb').value || '—';
+            const hct = document.getElementById('addBloodHct').value || '—';
+            const mcv = document.getElementById('addBloodMcv').value || '—';
+
+            db.blood.unshift({ date, wbc, neu, lym, rbc, hgb, hct, mcv });
+            saveAll();
+            loadAll();
+            toggleForm('form-blood-box');
+        }
+
+        // Tooltip Engine positioning calculations
+        const tooltipEl = document.getElementById('ttBox');
+        document.addEventListener('mouseover', function(e) {
+            const target = e.target.closest('.tt');
+            if (!target) {
+                tooltipEl.style.display = 'none';
+                return;
+            }
+            const key = target.dataset.tt;
+            const item = GLOSSARY[key];
+            if (!item) return;
+
+            tooltipEl.innerHTML = `
+                <strong class="text-[#00c8ff] font-display block text-sm mb-1.5 uppercase tracking-wider">${item.name}</strong>
+                <p class="leading-relaxed font-sans">${item.def}</p>
+                <span class="text-[#00ff88] font-mono block mt-2 text-[11px] font-semibold border-t border-[#00c8ff]/10 pt-1.5">⚕ Standard Reference: ${item.normal}</span>
+            `;
+            tooltipEl.style.display = 'block';
+            positionTooltip(e, target);
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            const target = e.target.closest('.tt');
+            if (target && tooltipEl.style.display === 'block') {
+                positionTooltip(e, target);
+            }
+        });
+
+        document.addEventListener('mouseout', function(e) {
+            const target = e.target.closest('.tt');
+            if (target) {
+                tooltipEl.style.display = 'none';
+            }
+        });
+
+        function positionTooltip(e, target) {
+            const rect = target.getBoundingClientRect();
+            const boxWidth = 320;
+            let x = rect.left + rect.width / 2 - boxWidth / 2;
+            x = Math.max(10, Math.min(x, window.innerWidth - boxWidth - 10));
+            let y = rect.bottom + 8;
+            if (y + 160 > window.innerHeight) {
+                y = rect.top - 180;
+            }
+            tooltipEl.style.left = x + 'px';
+            tooltipEl.style.top = y + 'px';
+        }
+
+        // Profile backup mechanics
+        function exportJSON() {
+            const output = {
+                personal: db.personal,
+                weightLog: db.weightLog,
+                bpLog: db.bpLog,
+                app: {
+                    lft: db.lft,
+                    kft: db.kft,
+                    met: db.met,
+                    blood: db.blood,
+                    ecg: db.ecg,
+                    trop: db.trop,
+                    echo: db.echo,
+                    carotid: db.carotid
+                },
+                exportedAt: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(output, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `HealthHUD_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed.personal) db.personal = parsed.personal;
+                    if (parsed.weightLog) db.weightLog = parsed.weightLog;
+                    if (parsed.bpLog) db.bpLog = parsed.bpLog;
+                    if (parsed.app) {
+                        db.lft = parsed.app.lft || [];
+                        db.kft = parsed.app.kft || [];
+                        db.met = parsed.app.met || [];
+                        db.blood = parsed.app.blood || [];
+                        db.ecg = parsed.app.ecg || [];
+                        db.trop = parsed.app.trop || [];
+                        db.echo = parsed.app.echo || [];
+                        db.carotid = parsed.app.carotid || [];
+                    }
+                    saveAll();
+                    loadAll();
+                    alert('Profile backup parameters parsed and synced to local storage successfully.');
+                } catch(err) {
+                    alert('Invalid directory backup schema.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Initialize Core Engine
+        window.onload = function() {
+            loadAll();
+            switchTab('tab-overview');
+        };
+    </script>
+</body>
+</html>
